@@ -26,6 +26,7 @@
 #define MAX_SPEED 20.0f
 #define CROUCH_SPEED 5.0f
 #define JUMP_FORCE 55.0f
+// retarded
 #define MAX_ACCEL 2000.0f
 // Grounded drag
 #define FRICTION 0.86f
@@ -34,8 +35,17 @@
 // Responsiveness for turning movement direction to looked direction
 #define CONTROL 15.0f
 #define CROUCH_HEIGHT 0.0f
+
+// player
 #define STAND_HEIGHT 1.0f
 #define BOTTOM_HEIGHT 0.5f
+#define PLAYER_RADIUS 0.5f
+#define PLAYER_HEIGHT (BOTTOM_HEIGHT + STAND_HEIGHT)
+#define WALL_HALF_LENGTH 6.0f
+#define WALL_HALF_THICKNESS 1.2f
+#define WALL_HEIGHT 14.0f
+#define ROTATED_WALL_ANGLE 45.0f
+#define NORMAL_WALL_SCALE 1.5f
 
 #define NORMALIZE_INPUT 1
 
@@ -69,6 +79,8 @@ static Vector2 lean = {0};
 static void DrawLevel(Model wall);
 static void UpdateCameraFPS(Camera *camera);
 static void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed, bool crouchHold);
+static bool CheckPlayerCollision(Vector3 position);
+static bool CheckPlayerAgainstWall(Vector3 position, Vector3 wallPosition, float halfLength, float halfThickness, float height, float rotation);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -84,6 +96,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera fps");
     Model wall = LoadModel("maze_wall.obj");
+    player.position = (Vector3){7.0f, 0.0f, 7.0f};
 
     // Initialize camera variables
     // NOTE: UpdateCameraFPS() takes care of the rest
@@ -235,9 +248,21 @@ void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed
     body->velocity.x = hvel.x;
     body->velocity.z = hvel.z;
 
-    body->position.x += body->velocity.x * delta;
     body->position.y += body->velocity.y * delta;
-    body->position.z += body->velocity.z * delta;
+
+    Vector3 nextPosition = body->position;
+    nextPosition.x += body->velocity.x * delta;
+    if (CheckPlayerCollision(nextPosition))
+        body->velocity.x = 0.0f;
+    else
+        body->position.x = nextPosition.x;
+
+    nextPosition = body->position;
+    nextPosition.z += body->velocity.z * delta;
+    if (CheckPlayerCollision(nextPosition))
+        body->velocity.z = 0.0f;
+    else
+        body->position.z = nextPosition.z;
 
     // Fancy collision system against the floor
     if (body->position.y <= 0.0f)
@@ -246,6 +271,86 @@ void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed
         body->velocity.y = 0.0f;
         body->isGrounded = true; // Enable jumping
     }
+
+    // clamp version 1
+    Vector2 hvelClamping = {body->velocity.x, body->velocity.z};
+    if (Vector2Length(hvelClamping) > MAX_SPEED)
+    {
+        hvelClamping = Vector2Scale(Vector2Normalize(hvelClamping), MAX_SPEED);
+        body->velocity.x = hvelClamping.x;
+        body->velocity.z = hvelClamping.y;
+    }
+
+    // clamp version 2
+    if (Vector3Length(body->velocity) > MAX_SPEED)
+    {
+        body->velocity = Vector3Scale(Vector3Normalize(body->velocity), MAX_SPEED);
+    }
+}
+
+static bool CheckPlayerCollision(Vector3 position)
+{
+    const int floorExtent = 10;
+    const float tileSize = 15.0f;
+
+    for (int z = -floorExtent; z < floorExtent; z++)
+    {
+        for (int x = -floorExtent; x < floorExtent; x++)
+        {
+            Vector3 wallPosition = {x * tileSize, 0.0f, z * tileSize};
+
+            if ((z & 1) && (x & 1))
+            {
+                if (CheckPlayerAgainstWall(position, wallPosition, WALL_HALF_LENGTH, WALL_HALF_THICKNESS, WALL_HEIGHT, ROTATED_WALL_ANGLE * DEG2RAD))
+                    return true;
+            }
+            else if (!(z & 1) && !(x & 1))
+            {
+                if (CheckPlayerAgainstWall(position, wallPosition, WALL_HALF_LENGTH * NORMAL_WALL_SCALE, WALL_HALF_THICKNESS * NORMAL_WALL_SCALE, WALL_HEIGHT * NORMAL_WALL_SCALE, 0.0f))
+                    return true;
+            }
+        }
+    }
+
+    BoundingBox playerBounds = {
+        (Vector3){position.x - PLAYER_RADIUS, position.y, position.z - PLAYER_RADIUS},
+        (Vector3){position.x + PLAYER_RADIUS, position.y + PLAYER_HEIGHT, position.z + PLAYER_RADIUS},
+    };
+    const Vector3 towerSize = {16.0f, 32.0f, 16.0f};
+    for (int xSign = -1; xSign <= 1; xSign += 2)
+    {
+        for (int zSign = -1; zSign <= 1; zSign += 2)
+        {
+            Vector3 towerPosition = {16.0f * xSign, 16.0f, 16.0f * zSign};
+            BoundingBox towerBounds = {
+                (Vector3){towerPosition.x - towerSize.x * 0.5f, towerPosition.y - towerSize.y * 0.5f, towerPosition.z - towerSize.z * 0.5f},
+                (Vector3){towerPosition.x + towerSize.x * 0.5f, towerPosition.y + towerSize.y * 0.5f, towerPosition.z + towerSize.z * 0.5f},
+            };
+            if (CheckCollisionBoxes(playerBounds, towerBounds))
+                return true;
+        }
+    }
+
+    return false;
+}
+
+static bool CheckPlayerAgainstWall(Vector3 position, Vector3 wallPosition, float halfLength, float halfThickness, float height, float rotation)
+{
+    if (position.y > height || position.y + PLAYER_HEIGHT < 0.0f)
+        return false;
+
+    float cosRotation = cosf(rotation);
+    float sinRotation = sinf(rotation);
+    float offsetX = position.x - wallPosition.x;
+    float offsetZ = position.z - wallPosition.z;
+    float localX = cosRotation * offsetX - sinRotation * offsetZ;
+    float localZ = sinRotation * offsetX + cosRotation * offsetZ;
+    float closestX = Clamp(localX, -halfLength, halfLength);
+    float closestZ = Clamp(localZ, -halfThickness, halfThickness);
+    float deltaX = localX - closestX;
+    float deltaZ = localZ - closestZ;
+
+    return deltaX * deltaX + deltaZ * deltaZ <= PLAYER_RADIUS * PLAYER_RADIUS;
 }
 
 // Update camera for FPS behaviour
@@ -316,9 +421,9 @@ static void DrawLevel(Model wall)
                     wall,
                     (Vector3){x * tileSize, 0.0f, y * tileSize},
                     (Vector3){0.0f, 1.0f, 0.0f}, // rotate around Y
-                    45.0f,                       // degrees
-                    (Vector3){1.0f, 1.0f, 1.0f}, // scale
-                    LIGHTGRAY);
+                    ROTATED_WALL_ANGLE,          // degrees
+                    (Vector3){1.0f, 1.0f, 1.0f}, // LIGHTGRAY
+                    RED);
                 DrawPlane((Vector3){x * tileSize, 0.0f, y * tileSize}, (Vector2){tileSize, tileSize}, SKYBLUE);
             }
             else if (!(y & 1) && !(x & 1))
@@ -326,7 +431,7 @@ static void DrawLevel(Model wall)
                 DrawModel(
                     wall,
                     (Vector3){x * tileSize, 0.0f, y * tileSize},
-                    1.5f,
+                    NORMAL_WALL_SCALE,
                     WHITE);
                 DrawPlane((Vector3){x * tileSize, 0.0f, y * tileSize}, (Vector2){tileSize, tileSize}, GRAY);
             }
