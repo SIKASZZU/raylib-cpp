@@ -25,8 +25,8 @@
 #define GRAVITY 32.0f
 #define MAX_SPEED 20.0f
 #define CROUCH_SPEED 5.0f
-#define JUMP_FORCE 12.0f
-#define MAX_ACCEL 150.0f
+#define JUMP_FORCE 55.0f
+#define MAX_ACCEL 2000.0f
 // Grounded drag
 #define FRICTION 0.86f
 // Increasing air drag, increases strafing speed
@@ -302,9 +302,8 @@ static void UpdateCameraFPS(Camera *camera)
 // Draw game level
 static void DrawLevel(Model wall)
 {
-    const int floorExtent = 25;
-    const float tileSize = 55.0f;
-    const Color tileColor1 = (Color){150, 200, 200, 255};
+    const int floorExtent = 10;
+    const float tileSize = 15.0f;
 
     // Floor tiles
     for (int y = -floorExtent; y < floorExtent; y++)
@@ -313,16 +312,23 @@ static void DrawLevel(Model wall)
         {
             if ((y & 1) && (x & 1))
             {
-                DrawModel(
+                DrawModelEx(
                     wall,
                     (Vector3){x * tileSize, 0.0f, y * tileSize},
-                    1.0f,
-                    WHITE);
-                // DrawPlane((Vector3){x * tileSize, 0.0f, y * tileSize}, (Vector2){tileSize, tileSize}, tileColor1);
+                    (Vector3){0.0f, 1.0f, 0.0f}, // rotate around Y
+                    45.0f,                       // degrees
+                    (Vector3){1.0f, 1.0f, 1.0f}, // scale
+                    LIGHTGRAY);
+                DrawPlane((Vector3){x * tileSize, 0.0f, y * tileSize}, (Vector2){tileSize, tileSize}, SKYBLUE);
             }
             else if (!(y & 1) && !(x & 1))
             {
-                DrawPlane((Vector3){x * tileSize, 0.0f, y * tileSize}, (Vector2){tileSize, tileSize}, LIGHTGRAY);
+                DrawModel(
+                    wall,
+                    (Vector3){x * tileSize, 0.0f, y * tileSize},
+                    1.5f,
+                    WHITE);
+                DrawPlane((Vector3){x * tileSize, 0.0f, y * tileSize}, (Vector2){tileSize, tileSize}, GRAY);
             }
         }
     }
@@ -346,6 +352,6 @@ static void DrawLevel(Model wall)
     DrawCubeV(towerPos, towerSize, towerColor);
     DrawCubeWiresV(towerPos, towerSize, DARKBLUE);
 
-    // Red sun
-    DrawSphere((Vector3){300.0f, 300.0f, 0.0f}, 100.0f, (Color){255, 0, 0, 255});
+    // Yellow sun
+    DrawSphere((Vector3){300.0f, 300.0f, 0.0f}, 100.0f, (Color){255, 215, 0, 255});
 }
