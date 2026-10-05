@@ -37,7 +37,7 @@
 #define STAND_HEIGHT     1.0f
 #define BOTTOM_HEIGHT    0.5f
 
-#define NORMALIZE_INPUT  0
+#define NORMALIZE_INPUT  1
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -96,7 +96,7 @@ int main(void)
 
     DisableCursor();        // Limit cursor to relative movement inside the window
 
-    SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(144);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -157,7 +157,7 @@ int main(void)
             DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, BLACK);
             DrawText("- Look around: arrow keys or mouse", 15, 45, 10, BLACK);
             DrawText(TextFormat("- Velocity Len: (%06.3f)", Vector2Length((Vector2){ player.velocity.x, player.velocity.z })), 15, 60, 10, BLACK);
-
+            DrawFPS(10, screenHeight - 20);
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
