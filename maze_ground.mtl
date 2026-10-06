@@ -1,0 +1,17 @@
+# Flat albedo materials. Lighting is intentionally left to the game renderer.
+
+newmtl Concrete
+Ka 0.000 0.000 0.000
+Kd 1.000 1.000 1.000
+Ks 0.000 0.000 0.000
+d 1.0
+illum 1
+map_Kd ground_concrete_albedo.png
+
+newmtl Moss
+Ka 0.000 0.000 0.000
+Kd 1.000 1.000 1.000
+Ks 0.000 0.000 0.000
+d 1.0
+illum 1
+map_Kd ground_moss_albedo.png

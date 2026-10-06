@@ -46,6 +46,8 @@
 #define WALL_HEIGHT 14.0f
 #define ROTATED_WALL_ANGLE 45.0f
 #define NORMAL_WALL_SCALE 1.5f
+#define LEVEL_TILE_SIZE 20.0f
+#define GROUND_MODEL_SIZE 12.0f
 
 #define NORMALIZE_INPUT 1
 
@@ -76,7 +78,7 @@ static Vector2 lean = {0};
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-static void DrawLevel(Model wall);
+static void DrawLevel(Model wall, Model ground);
 static void UpdateCameraFPS(Camera *camera);
 static void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed, bool crouchHold);
 static bool CheckPlayerCollision(Vector3 position);
@@ -96,6 +98,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera fps");
     Model wall = LoadModel("maze_wall.obj");
+    Model ground = LoadModel("maze_ground.obj");
     player.position = (Vector3){7.0f, 0.0f, 7.0f};
 
     // Initialize camera variables
@@ -163,7 +166,7 @@ int main(void)
         ClearBackground(RAYWHITE);
 
         BeginMode3D(camera);
-        DrawLevel(wall);
+        DrawLevel(wall, ground);
         EndMode3D();
 
         // Draw info box
@@ -184,6 +187,7 @@ int main(void)
     CloseWindow(); // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
     UnloadModel(wall);
+    UnloadModel(ground);
 
     return 0;
 }
@@ -291,13 +295,12 @@ void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed
 static bool CheckPlayerCollision(Vector3 position)
 {
     const int floorExtent = 10;
-    const float tileSize = 15.0f;
 
     for (int z = -floorExtent; z < floorExtent; z++)
     {
         for (int x = -floorExtent; x < floorExtent; x++)
         {
-            Vector3 wallPosition = {x * tileSize, 0.0f, z * tileSize};
+            Vector3 wallPosition = {x * LEVEL_TILE_SIZE, 0.0f, z * LEVEL_TILE_SIZE};
 
             if ((z & 1) && (x & 1))
             {
@@ -405,35 +408,56 @@ static void UpdateCameraFPS(Camera *camera)
 }
 
 // Draw game level
-static void DrawLevel(Model wall)
+static void DrawLevel(Model wall, Model ground)
 {
     const int floorExtent = 10;
-    const float tileSize = 15.0f;
+    const float floorSize = floorExtent * 2 * LEVEL_TILE_SIZE;
+    const float groundScale = LEVEL_TILE_SIZE / GROUND_MODEL_SIZE;
+
+    // DrawPlane(
+    //     (Vector3){-LEVEL_TILE_SIZE * 0.5f, -0.061f, -LEVEL_TILE_SIZE * 0.5f},
+    //     (Vector2){floorSize, floorSize},
+    //     WHITE);
 
     // Floor tiles
     for (int y = -floorExtent; y < floorExtent; y++)
     {
         for (int x = -floorExtent; x < floorExtent; x++)
         {
+            DrawModel(
+                ground,
+                (Vector3){x * LEVEL_TILE_SIZE, 0.0f, y * LEVEL_TILE_SIZE},
+                groundScale,
+                WHITE);
             if ((y & 1) && (x & 1))
             {
                 DrawModelEx(
                     wall,
-                    (Vector3){x * tileSize, 0.0f, y * tileSize},
+                    (Vector3){x * LEVEL_TILE_SIZE, 0.0f, y * LEVEL_TILE_SIZE},
                     (Vector3){0.0f, 1.0f, 0.0f}, // rotate around Y
                     ROTATED_WALL_ANGLE,          // degrees
                     (Vector3){1.0f, 1.0f, 1.0f}, // LIGHTGRAY
                     RED);
-                DrawPlane((Vector3){x * tileSize, 0.0f, y * tileSize}, (Vector2){tileSize, tileSize}, SKYBLUE);
+                // DrawModel(
+                //     ground,
+                //     (Vector3){x * tileSize, 0.0f, y * tileSize},
+                //     1.0f,
+                //     RED);
             }
             else if (!(y & 1) && !(x & 1))
             {
                 DrawModel(
                     wall,
-                    (Vector3){x * tileSize, 0.0f, y * tileSize},
+                    (Vector3){x * LEVEL_TILE_SIZE, 0.0f, y * LEVEL_TILE_SIZE},
                     NORMAL_WALL_SCALE,
                     WHITE);
-                DrawPlane((Vector3){x * tileSize, 0.0f, y * tileSize}, (Vector2){tileSize, tileSize}, GRAY);
+
+                // DrawModel(
+                //     ground,
+                //     (Vector3){x * tileSize, 0.0f, y * tileSize},
+                //     1.0f,
+                //     BLACK);
+                // DrawPlane((Vector3){x * tileSize, 0.0f, y * tileSize}, (Vector2){tileSize, tileSize}, GRAY);
             }
         }
     }
