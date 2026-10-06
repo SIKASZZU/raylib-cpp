@@ -97,8 +97,14 @@ int main(void)
     const int screenHeight = 900;
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera fps");
-    Model wall = LoadModel("maze_wall.obj");
-    Model ground = LoadModel("maze_ground.obj");
+
+    // Model model = LoadModel("resources/models/obj/castle.obj");                 // Load model
+    // Texture2D texture = LoadTexture("resources/models/obj/castle_diffuse.png"); // Load model texture
+    // model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;            // Set map diffuse texture
+
+    Model wall = LoadModel("resources/wall/maze_wall.obj");
+    Model ground = LoadModel("resources/ground/maze_ground.obj");
+
     player.position = (Vector3){7.0f, 0.0f, 7.0f};
 
     // Initialize camera variables
