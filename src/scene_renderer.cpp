@@ -46,22 +46,28 @@ RenderStats DrawLevel(Model wall, Model ground, const Camera *camera)
         {
             Vector3 position = {x * LEVEL_TILE_SIZE, 0.0f, z * LEVEL_TILE_SIZE};
             stats.totalInstances++;
+
+            // ground
             if (IsSphereInCameraView(camera, Vector3{position.x, -0.5f * groundScale, position.z}, groundRadius))
             {
                 DrawModel(ground, position, groundScale, WHITE);
                 stats.visibleInstances++;
             }
 
+            // rotated walls
             if ((z & 1) && (x & 1))
             {
                 stats.totalInstances++;
                 if (IsSphereInCameraView(camera, Vector3{position.x, WALL_HEIGHT * 0.5f, position.z}, wallRadiusBase))
                 {
+                    position.y += 5.0f;
                     DrawModelEx(wall, position, Vector3{0.0f, 1.0f, 0.0f},
                                 ROTATED_WALL_ANGLE, Vector3{1.0f, 1.0f, 1.0f}, WHITE);
                     stats.visibleInstances++;
                 }
             }
+
+            // normal walls
             else if (!(z & 1) && !(x & 1))
             {
                 const float wallScale = NORMAL_WALL_SCALE;

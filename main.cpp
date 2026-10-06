@@ -36,9 +36,15 @@ int main(void)
 
     float physicsAccumulator = 0.0f;
     bool jumpQueued = false;
+    bool showShadowMask = false;
 
     while (!WindowShouldClose())
     {
+        if (IsKeyPressed(KEY_F3))
+        {
+            showShadowMask = !showShadowMask;
+        }
+
         float delta = GetFrameTime();
         CameraControllerApplyMouse(&cameraController, GetMouseDelta());
 
@@ -63,22 +69,25 @@ int main(void)
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
+        ShaderSystemSetShadowMask(&shaders, showShadowMask);
+
         BeginMode3D(camera);
-        BeginShaderMode(shaders.lighting);
+        ShaderSystemBeginLighting(&shaders);
         RenderStats renderStats = DrawLevel(wall, ground, &camera);
-        EndShaderMode();
+        ShaderSystemEndLighting();
         EndMode3D();
 
-        DrawRectangle(5, 5, 380, 95, Fade(SKYBLUE, 0.5f));
-        DrawRectangleLines(5, 5, 380, 95, BLUE);
+        DrawRectangle(5, 5, 440, 110, Fade(SKYBLUE, 0.5f));
+        DrawRectangleLines(5, 5, 440, 110, BLUE);
         DrawText("Camera controls:", 15, 15, 10, BLACK);
         DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, BLACK);
         DrawText("- Look around: arrow keys or mouse", 15, 45, 10, BLACK);
         DrawText(TextFormat("- Velocity Len: (%06.3f)", PlayerGetHorizontalSpeed(&player)), 15, 60, 10, BLACK);
+        DrawText(TextFormat("- Shadow mask (F3): %s", showShadowMask ? "ON" : "OFF"), 15, 75, 10, BLACK);
         DrawText(TextFormat("- In-frustum instances: %d / %d (%d culled)",
                             renderStats.visibleInstances, renderStats.totalInstances,
                             renderStats.totalInstances - renderStats.visibleInstances),
-                 15, 75, 10, BLACK);
+                 15, 90, 10, BLACK);
         DrawFPS(10, screenHeight - 20);
         EndDrawing();
     }

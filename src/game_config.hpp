@@ -27,6 +27,6 @@
 #define GROUND_MODEL_SIZE 12.0f
 
 #define SHADOW_MAP_SIZE 2048
-#define SHADOW_CAMERA_SIZE 520.0f
-
+#define SHADOW_CAMERA_SIZE 160.0f
+static const int SHADOW_TEXTURE_SLOT = 10;
 #endif

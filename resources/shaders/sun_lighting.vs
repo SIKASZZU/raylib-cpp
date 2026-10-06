@@ -19,10 +19,12 @@ out vec4 fragLightPosition;
 void main()
 {
     vec4 worldPosition = matModel * vec4(vertexPosition, 1.0);
+
     fragTexCoord = vertexTexCoord;
     fragColor = vertexColor;
     fragWorldPosition = worldPosition.xyz;
     fragWorldNormal = normalize((matNormal * vec4(vertexNormal, 0.0)).xyz);
     fragLightPosition = lightViewProj * worldPosition;
+
     gl_Position = mvp * vec4(vertexPosition, 1.0);
 }
