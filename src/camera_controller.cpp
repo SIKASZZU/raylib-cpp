@@ -1,6 +1,6 @@
-#include "camera_controller.h"
+#include "camera_controller.hpp"
 
-#include "game_config.h"
+#include "game_config.hpp"
 #include "raymath.h"
 
 #include <math.h>

@@ -1,8 +1,8 @@
-#include "shader_system.h"
+#include "shader_system.hpp"
 
-#include "game_config.h"
+#include "game_config.hpp"
 #include "raymath.h"
-#include "scene_renderer.h"
+#include "scene_renderer.hpp"
 
 static void SetModelShader(Model *model, Shader shader);
 

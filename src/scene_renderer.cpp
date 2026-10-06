@@ -1,6 +1,6 @@
-#include "scene_renderer.h"
+#include "scene_renderer.hpp"
 
-#include "game_config.h"
+#include "game_config.hpp"
 #include "raymath.h"
 
 #include <math.h>

@@ -1,11 +1,11 @@
 #include "raylib.h"
 #include "raymath.h"
 
-#include "src/camera_controller.h"
-#include "src/game_config.h"
-#include "src/player.h"
-#include "src/scene_renderer.h"
-#include "src/shader_system.h"
+#include "src/camera_controller.hpp"
+#include "src/game_config.hpp"
+#include "src/player.hpp"
+#include "src/scene_renderer.hpp"
+#include "src/shader_system.hpp"
 
 int main(void)
 {
