@@ -26,6 +26,8 @@
 #define PLAYER_RADIUS 0.5f
 #define PLAYER_HEIGHT (BOTTOM_HEIGHT + STAND_HEIGHT)
 
+// map
+#define MAP_SIDE_LENGTH 2
 #define WALL_HALF_LENGTH 6.0f
 #define WALL_HALF_THICKNESS 1.2f
 #define WALL_HEIGHT 14.0f
@@ -33,6 +35,8 @@
 #define NORMAL_WALL_SCALE 1.5f
 #define LEVEL_TILE_SIZE 20.0f
 #define GROUND_MODEL_SIZE 12.0f
+#define SHADOW_MAP_SIZE 2048
+#define SHADOW_CAMERA_SIZE 520.0f
 
 #define NORMALIZE_INPUT 1
 
@@ -76,6 +80,8 @@ static void UpdateBody(Body *body, float rot, char side, char forward, bool jump
 static bool CheckPlayerCollision(Vector3 position);
 static bool CheckPlayerAgainstWall(Vector3 position, Vector3 wallPosition, float halfLength, float halfThickness, float height, float rotation);
 static float GetFrameLerpFactor(float rate, float delta);
+static void SetModelShader(Model *model, Shader shader);
+static void DrawShadowCasters(Model wall, Model ground);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -97,6 +103,73 @@ int main(void)
 
     Model wall = LoadModel("resources/wall/maze_wall.obj");
     Model ground = LoadModel("resources/ground/maze_ground.obj");
+    Shader lightingShader = LoadShader("resources/shaders/sun_lighting.vs", "resources/shaders/sun_lighting.fs");
+    Shader shadowShader = LoadShader("resources/shaders/shadow_depth.vs", "resources/shaders/shadow_depth.fs");
+    if (!IsShaderValid(lightingShader) || !IsShaderValid(shadowShader))
+    {
+        TraceLog(LOG_ERROR, "Failed to load the lighting or shadow shader");
+        if (IsShaderValid(lightingShader))
+            UnloadShader(lightingShader);
+        if (IsShaderValid(shadowShader))
+            UnloadShader(shadowShader);
+        UnloadModel(wall);
+        UnloadModel(ground);
+        CloseWindow();
+        return 1;
+    }
+
+    RenderTexture2D shadowMap = LoadRenderTexture(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
+    if (!IsRenderTextureValid(shadowMap))
+    {
+        TraceLog(LOG_ERROR, "Failed to create the shadow map render texture");
+        UnloadModel(wall);
+        UnloadModel(ground);
+        UnloadShader(lightingShader);
+        UnloadShader(shadowShader);
+        CloseWindow();
+        return 1;
+    }
+
+    const Vector3 sunPosition = {300.0f, 300.0f, 0.0f};
+    Camera lightCamera = {0};
+    lightCamera.position = sunPosition;
+    lightCamera.target = (Vector3){0.0f, 0.0f, 0.0f};
+    lightCamera.up = (Vector3){0.0f, 1.0f, 0.0f};
+    lightCamera.fovy = SHADOW_CAMERA_SIZE;
+    lightCamera.projection = CAMERA_ORTHOGRAPHIC;
+
+    SetModelShader(&wall, shadowShader);
+    SetModelShader(&ground, shadowShader);
+    BeginTextureMode(shadowMap);
+    ClearBackground(WHITE);
+    BeginMode3D(lightCamera);
+    BeginShaderMode(shadowShader);
+    DrawShadowCasters(wall, ground);
+    EndShaderMode();
+    EndMode3D();
+    EndTextureMode();
+
+    SetModelShader(&wall, lightingShader);
+    SetModelShader(&ground, lightingShader);
+
+    Matrix lightProjection = MatrixOrtho(
+        -SHADOW_CAMERA_SIZE * 0.5,
+        SHADOW_CAMERA_SIZE * 0.5,
+        -SHADOW_CAMERA_SIZE * 0.5,
+        SHADOW_CAMERA_SIZE * 0.5,
+        0.01,
+        1000.0);
+    Matrix lightViewProjection = MatrixMultiply(GetCameraMatrix(lightCamera), lightProjection);
+    int lightViewProjectionLocation = GetShaderLocation(lightingShader, "lightViewProj");
+    int lightDirectionLocation = GetShaderLocation(lightingShader, "lightDirection");
+    int shadowMapLocation = GetShaderLocation(lightingShader, "shadowMap");
+    int shadowTexelSizeLocation = GetShaderLocation(lightingShader, "shadowTexelSize");
+    Vector3 lightDirection = Vector3Normalize(Vector3Subtract(sunPosition, lightCamera.target));
+    Vector2 shadowTexelSize = {1.0f / SHADOW_MAP_SIZE, 1.0f / SHADOW_MAP_SIZE};
+    SetShaderValueMatrix(lightingShader, lightViewProjectionLocation, lightViewProjection);
+    SetShaderValue(lightingShader, lightDirectionLocation, &lightDirection, SHADER_UNIFORM_VEC3);
+    SetShaderValueTexture(lightingShader, shadowMapLocation, shadowMap.texture);
+    SetShaderValue(lightingShader, shadowTexelSizeLocation, &shadowTexelSize, SHADER_UNIFORM_VEC2);
 
     player.position = (Vector3){7.0f, 0.0f, 7.0f};
 
@@ -175,7 +248,9 @@ int main(void)
 
         RenderStats renderStats = {0};
         BeginMode3D(camera);
+        BeginShaderMode(lightingShader);
         renderStats = DrawLevel(wall, ground, &camera);
+        EndShaderMode();
         EndMode3D();
 
         // Draw info box
@@ -194,10 +269,13 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow(); // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
     UnloadModel(wall);
     UnloadModel(ground);
+    UnloadRenderTexture(shadowMap);
+    UnloadShader(shadowShader);
+    UnloadShader(lightingShader);
+    CloseWindow(); // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
 
     return 0;
 }
@@ -306,9 +384,56 @@ static float GetFrameLerpFactor(float rate, float delta)
     return 1.0f - expf(-rate * delta);
 }
 
+static void SetModelShader(Model *model, Shader shader)
+{
+    for (int i = 0; i < model->materialCount; i++)
+        model->materials[i].shader = shader;
+}
+
+static void DrawShadowCasters(Model wall, Model ground)
+{
+    const int floorExtent = MAP_SIDE_LENGTH;
+    const float groundScale = LEVEL_TILE_SIZE / GROUND_MODEL_SIZE;
+
+    for (int z = -floorExtent; z < floorExtent; z++)
+    {
+        for (int x = -floorExtent; x < floorExtent; x++)
+        {
+            Vector3 position = {x * LEVEL_TILE_SIZE, 0.0f, z * LEVEL_TILE_SIZE};
+            DrawModel(ground, position, groundScale, WHITE);
+
+            if ((z & 1) && (x & 1))
+            {
+                DrawModelEx(
+                    wall,
+                    position,
+                    (Vector3){0.0f, 1.0f, 0.0f},
+                    ROTATED_WALL_ANGLE,
+                    (Vector3){1.0f, 1.0f, 1.0f},
+                    WHITE);
+            }
+            else if (!(z & 1) && !(x & 1))
+            {
+                DrawModel(wall, position, NORMAL_WALL_SCALE, WHITE);
+            }
+        }
+    }
+
+    for (int xSign = -1; xSign <= 1; xSign += 2)
+    {
+        for (int zSign = -1; zSign <= 1; zSign += 2)
+        {
+            DrawCubeV(
+                (Vector3){16.0f * xSign, 16.0f, 16.0f * zSign},
+                (Vector3){16.0f, 32.0f, 16.0f},
+                WHITE);
+        }
+    }
+}
+
 static bool CheckPlayerCollision(Vector3 position)
 {
-    const int floorExtent = 10;
+    const int floorExtent = MAP_SIDE_LENGTH;
 
     for (int z = -floorExtent; z < floorExtent; z++)
     {
@@ -449,7 +574,7 @@ static bool IsSphereInCameraView(const Camera *camera, Vector3 center, float rad
 // Draw only scene instances whose bounding spheres intersect the camera view.
 static RenderStats DrawLevel(Model wall, Model ground, const Camera *camera)
 {
-    const int floorExtent = 10;
+    const int floorExtent = MAP_SIDE_LENGTH;
     const float groundScale = LEVEL_TILE_SIZE / GROUND_MODEL_SIZE;
     const float groundRadius = sqrtf(2.0f * LEVEL_TILE_SIZE * LEVEL_TILE_SIZE * 0.25f +
                                      0.25f * groundScale * groundScale);
