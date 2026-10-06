@@ -1,19 +1,3 @@
-/*******************************************************************************************
- *
- *   raylib [core] example - 3d camera fps
- *
- *   Example complexity rating: [★★★☆] 3/4
- *
- *   Example originally created with raylib 5.5, last time updated with raylib 5.5
- *
- *   Example contributed by Agnis Aldiņš (@nezvers) and reviewed by Ramon Santamaria (@raysan5)
- *
- *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
- *   BSD-like license that allows static linking with closed source software
- *
- *   Copyright (c) 2025 Agnis Aldiņš (@nezvers)
- *
- ********************************************************************************************/
 
 #include "raylib.h"
 #include "raymath.h"
@@ -26,8 +10,8 @@
 #define MAX_SPEED 20.0f
 #define CROUCH_SPEED 5.0f
 #define JUMP_FORCE 55.0f
-// retarded
 #define MAX_ACCEL 2000.0f
+#define PHYSICS_STEP (1.0f / 120.0f)
 // Grounded drag
 #define FRICTION 0.86f
 // Increasing air drag, increases strafing speed
@@ -41,6 +25,7 @@
 #define BOTTOM_HEIGHT 0.5f
 #define PLAYER_RADIUS 0.5f
 #define PLAYER_HEIGHT (BOTTOM_HEIGHT + STAND_HEIGHT)
+
 #define WALL_HALF_LENGTH 6.0f
 #define WALL_HALF_THICKNESS 1.2f
 #define WALL_HEIGHT 14.0f
@@ -63,6 +48,12 @@ typedef struct
     bool isGrounded;
 } Body;
 
+typedef struct
+{
+    int totalInstances;
+    int visibleInstances;
+} RenderStats;
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -78,11 +69,13 @@ static Vector2 lean = {0};
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
-static void DrawLevel(Model wall, Model ground);
+static RenderStats DrawLevel(Model wall, Model ground, const Camera *camera);
+static bool IsSphereInCameraView(const Camera *camera, Vector3 center, float radius);
 static void UpdateCameraFPS(Camera *camera);
-static void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed, bool crouchHold);
+static void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed, bool crouchHold, float delta);
 static bool CheckPlayerCollision(Vector3 position);
 static bool CheckPlayerAgainstWall(Vector3 position, Vector3 wallPosition, float halfLength, float halfThickness, float height, float rotation);
+static float GetFrameLerpFactor(float rate, float delta);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -121,8 +114,9 @@ int main(void)
     UpdateCameraFPS(&camera); // Update camera parameters
 
     DisableCursor(); // Limit cursor to relative movement inside the window
-
-    SetTargetFPS(144); // Set our game to run at 60 frames-per-second
+    SetTargetFPS(0);
+    float physicsAccumulator = 0.0f;
+    bool jumpQueued = false;
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -137,10 +131,18 @@ int main(void)
         char sideway = (IsKeyDown(KEY_D) - IsKeyDown(KEY_A));
         char forward = (IsKeyDown(KEY_W) - IsKeyDown(KEY_S));
         bool crouching = IsKeyDown(KEY_LEFT_CONTROL);
-        UpdateBody(&player, lookRotation.x, sideway, forward, IsKeyPressed(KEY_SPACE), crouching);
 
         float delta = GetFrameTime();
-        headLerp = Lerp(headLerp, (crouching ? CROUCH_HEIGHT : STAND_HEIGHT), 20.0f * delta);
+        physicsAccumulator += delta;
+        jumpQueued = jumpQueued || IsKeyPressed(KEY_SPACE);
+        while (physicsAccumulator >= PHYSICS_STEP)
+        {
+            UpdateBody(&player, lookRotation.x, sideway, forward, jumpQueued, crouching, PHYSICS_STEP);
+            jumpQueued = false;
+            physicsAccumulator -= PHYSICS_STEP;
+        }
+
+        headLerp = Lerp(headLerp, (crouching ? CROUCH_HEIGHT : STAND_HEIGHT), GetFrameLerpFactor(20.0f, delta));
         camera.position = (Vector3){
             player.position.x,
             player.position.y + (BOTTOM_HEIGHT + headLerp),
@@ -150,17 +152,17 @@ int main(void)
         if (player.isGrounded && ((forward != 0) || (sideway != 0)))
         {
             headTimer += delta * 3.0f;
-            walkLerp = Lerp(walkLerp, 1.0f, 10.0f * delta);
-            camera.fovy = Lerp(camera.fovy, 55.0f, 5.0f * delta);
+            walkLerp = Lerp(walkLerp, 1.0f, GetFrameLerpFactor(10.0f, delta));
+            camera.fovy = Lerp(camera.fovy, 55.0f, GetFrameLerpFactor(5.0f, delta));
         }
         else
         {
-            walkLerp = Lerp(walkLerp, 0.0f, 10.0f * delta);
-            camera.fovy = Lerp(camera.fovy, 60.0f, 5.0f * delta);
+            walkLerp = Lerp(walkLerp, 0.0f, GetFrameLerpFactor(10.0f, delta));
+            camera.fovy = Lerp(camera.fovy, 60.0f, GetFrameLerpFactor(5.0f, delta));
         }
 
-        lean.x = Lerp(lean.x, sideway * 0.02f, 10.0f * delta);
-        lean.y = Lerp(lean.y, forward * 0.015f, 10.0f * delta);
+        lean.x = Lerp(lean.x, sideway * 0.02f, GetFrameLerpFactor(10.0f, delta));
+        lean.y = Lerp(lean.y, forward * 0.015f, GetFrameLerpFactor(10.0f, delta));
 
         UpdateCameraFPS(&camera);
         //----------------------------------------------------------------------------------
@@ -171,18 +173,20 @@ int main(void)
 
         ClearBackground(RAYWHITE);
 
+        RenderStats renderStats = {0};
         BeginMode3D(camera);
-        DrawLevel(wall, ground);
+        renderStats = DrawLevel(wall, ground, &camera);
         EndMode3D();
 
         // Draw info box
-        DrawRectangle(5, 5, 330, 75, Fade(SKYBLUE, 0.5f));
-        DrawRectangleLines(5, 5, 330, 75, BLUE);
+        DrawRectangle(5, 5, 380, 95, Fade(SKYBLUE, 0.5f));
+        DrawRectangleLines(5, 5, 380, 95, BLUE);
 
         DrawText("Camera controls:", 15, 15, 10, BLACK);
         DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, BLACK);
         DrawText("- Look around: arrow keys or mouse", 15, 45, 10, BLACK);
         DrawText(TextFormat("- Velocity Len: (%06.3f)", Vector2Length((Vector2){player.velocity.x, player.velocity.z})), 15, 60, 10, BLACK);
+        DrawText(TextFormat("- In-frustum instances: %d / %d (%d culled)", renderStats.visibleInstances, renderStats.totalInstances, renderStats.totalInstances - renderStats.visibleInstances), 15, 75, 10, BLACK);
         DrawFPS(10, screenHeight - 20);
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -202,7 +206,7 @@ int main(void)
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 // Update body considering current world state
-void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed, bool crouchHold)
+void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed, bool crouchHold, float delta)
 {
     Vector2 input = (Vector2){(float)side, (float)-forward};
 
@@ -211,8 +215,6 @@ void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed
     if ((side != 0) && (forward != 0))
         input = Vector2Normalize(input);
 #endif
-
-    float delta = GetFrameTime();
 
     if (!body->isGrounded)
         body->velocity.y -= GRAVITY * delta;
@@ -235,9 +237,10 @@ void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed
         0.0f,
         input.x * right.z + input.y * front.z,
     };
-    body->dir = Vector3Lerp(body->dir, desiredDir, CONTROL * delta);
+    float controlFactor = 1.0f - powf(1.0f - CONTROL / 60.0f, delta * 60.0f);
+    body->dir = Vector3Lerp(body->dir, desiredDir, controlFactor);
 
-    float decel = (body->isGrounded ? FRICTION : AIR_DRAG);
+    float decel = powf(body->isGrounded ? FRICTION : AIR_DRAG, delta * 60.0f);
     Vector3 hvel = (Vector3){body->velocity.x * decel, 0.0f, body->velocity.z * decel};
 
     float hvelLength = Vector3Length(hvel); // Magnitude
@@ -296,6 +299,11 @@ void UpdateBody(Body *body, float rot, char side, char forward, bool jumpPressed
     {
         body->velocity = Vector3Scale(Vector3Normalize(body->velocity), MAX_SPEED);
     }
+}
+
+static float GetFrameLerpFactor(float rate, float delta)
+{
+    return 1.0f - expf(-rate * delta);
 }
 
 static bool CheckPlayerCollision(Vector3 position)
@@ -413,80 +421,114 @@ static void UpdateCameraFPS(Camera *camera)
     camera->target = Vector3Add(camera->position, pitch);
 }
 
-// Draw game level
-static void DrawLevel(Model wall, Model ground)
+static bool IsSphereInCameraView(const Camera *camera, Vector3 center, float radius)
+{
+    const Vector3 forward = Vector3Normalize(Vector3Subtract(camera->target, camera->position));
+    const Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, camera->up));
+    const Vector3 cameraUp = Vector3Normalize(Vector3CrossProduct(right, forward));
+    const Vector3 offset = Vector3Subtract(center, camera->position);
+    const float depth = Vector3DotProduct(offset, forward);
+
+    if (depth + radius < 0.01f)
+        return false;
+
+    const float halfVerticalFov = camera->fovy * DEG2RAD * 0.5f;
+    const float tanVertical = tanf(halfVerticalFov);
+    const float tanHorizontal = tanVertical * ((float)GetScreenWidth() / GetScreenHeight());
+    const float horizontal = fabsf(Vector3DotProduct(offset, right));
+    const float vertical = fabsf(Vector3DotProduct(offset, cameraUp));
+
+    if (horizontal > depth * tanHorizontal + radius * sqrtf(1.0f + tanHorizontal * tanHorizontal))
+        return false;
+    if (vertical > depth * tanVertical + radius * sqrtf(1.0f + tanVertical * tanVertical))
+        return false;
+
+    return true;
+}
+
+// Draw only scene instances whose bounding spheres intersect the camera view.
+static RenderStats DrawLevel(Model wall, Model ground, const Camera *camera)
 {
     const int floorExtent = 10;
-    const float floorSize = floorExtent * 2 * LEVEL_TILE_SIZE;
     const float groundScale = LEVEL_TILE_SIZE / GROUND_MODEL_SIZE;
-
-    // DrawPlane(
-    //     (Vector3){-LEVEL_TILE_SIZE * 0.5f, -0.061f, -LEVEL_TILE_SIZE * 0.5f},
-    //     (Vector2){floorSize, floorSize},
-    //     WHITE);
-
+    const float groundRadius = sqrtf(2.0f * LEVEL_TILE_SIZE * LEVEL_TILE_SIZE * 0.25f +
+                                     0.25f * groundScale * groundScale);
+    const float wallRadiusBase = sqrtf(WALL_HALF_LENGTH * WALL_HALF_LENGTH +
+                                       (WALL_HEIGHT * 0.5f + 0.2f) * (WALL_HEIGHT * 0.5f + 0.2f) +
+                                       1.4f * 1.4f);
+    RenderStats stats = {0};
     // Floor tiles
     for (int y = -floorExtent; y < floorExtent; y++)
     {
         for (int x = -floorExtent; x < floorExtent; x++)
         {
-            DrawModel(
-                ground,
-                (Vector3){x * LEVEL_TILE_SIZE, 0.0f, y * LEVEL_TILE_SIZE},
-                groundScale,
-                WHITE);
+            Vector3 position = {x * LEVEL_TILE_SIZE, 0.0f, y * LEVEL_TILE_SIZE};
+            stats.totalInstances++;
+            if (IsSphereInCameraView(camera, (Vector3){position.x, -0.5f * groundScale, position.z}, groundRadius))
+            {
+                DrawModel(ground, position, groundScale, WHITE);
+                stats.visibleInstances++;
+            }
+
             if ((y & 1) && (x & 1))
             {
-                DrawModelEx(
-                    wall,
-                    (Vector3){x * LEVEL_TILE_SIZE, 0.0f, y * LEVEL_TILE_SIZE},
-                    (Vector3){0.0f, 1.0f, 0.0f}, // rotate around Y
-                    ROTATED_WALL_ANGLE,          // degrees
-                    (Vector3){1.0f, 1.0f, 1.0f}, // LIGHTGRAY
-                    RED);
-                // DrawModel(
-                //     ground,
-                //     (Vector3){x * tileSize, 0.0f, y * tileSize},
-                //     1.0f,
-                //     RED);
+                const float wallRadius = wallRadiusBase;
+                stats.totalInstances++;
+                if (IsSphereInCameraView(camera, (Vector3){position.x, WALL_HEIGHT * 0.5f, position.z}, wallRadius))
+                {
+                    DrawModelEx(
+                        wall,
+                        position,
+                        (Vector3){0.0f, 1.0f, 0.0f}, // rotate around Y
+                        ROTATED_WALL_ANGLE,          // degrees
+                        (Vector3){1.0f, 1.0f, 1.0f}, // LIGHTGRAY
+                        RED);
+                    stats.visibleInstances++;
+                }
             }
             else if (!(y & 1) && !(x & 1))
             {
-                DrawModel(
-                    wall,
-                    (Vector3){x * LEVEL_TILE_SIZE, 0.0f, y * LEVEL_TILE_SIZE},
-                    NORMAL_WALL_SCALE,
-                    WHITE);
-
-                // DrawModel(
-                //     ground,
-                //     (Vector3){x * tileSize, 0.0f, y * tileSize},
-                //     1.0f,
-                //     BLACK);
-                // DrawPlane((Vector3){x * tileSize, 0.0f, y * tileSize}, (Vector2){tileSize, tileSize}, GRAY);
+                const float wallScale = NORMAL_WALL_SCALE;
+                const float wallRadius = wallRadiusBase * wallScale;
+                stats.totalInstances++;
+                if (IsSphereInCameraView(camera,
+                                         (Vector3){position.x, WALL_HEIGHT * wallScale * 0.5f, position.z},
+                                         wallRadius))
+                {
+                    DrawModel(wall, position, wallScale, WHITE);
+                    stats.visibleInstances++;
+                }
             }
         }
     }
 
     const Vector3 towerSize = (Vector3){16.0f, 32.0f, 16.0f};
     const Color towerColor = (Color){150, 200, 200, 255};
+    const float towerRadius = sqrtf(8.0f * 8.0f + 16.0f * 16.0f + 8.0f * 8.0f);
 
-    Vector3 towerPos = (Vector3){16.0f, 16.0f, 16.0f};
-    DrawCubeV(towerPos, towerSize, towerColor);
-    DrawCubeWiresV(towerPos, towerSize, DARKBLUE);
-
-    towerPos.x *= -1;
-    DrawCubeV(towerPos, towerSize, towerColor);
-    DrawCubeWiresV(towerPos, towerSize, DARKBLUE);
-
-    towerPos.z *= -1;
-    DrawCubeV(towerPos, towerSize, towerColor);
-    DrawCubeWiresV(towerPos, towerSize, DARKBLUE);
-
-    towerPos.x *= -1;
-    DrawCubeV(towerPos, towerSize, towerColor);
-    DrawCubeWiresV(towerPos, towerSize, DARKBLUE);
+    for (int xSign = -1; xSign <= 1; xSign += 2)
+    {
+        for (int zSign = -1; zSign <= 1; zSign += 2)
+        {
+            Vector3 towerPos = {16.0f * xSign, 16.0f, 16.0f * zSign};
+            stats.totalInstances++;
+            if (IsSphereInCameraView(camera, towerPos, towerRadius))
+            {
+                DrawCubeV(towerPos, towerSize, towerColor);
+                DrawCubeWiresV(towerPos, towerSize, DARKBLUE);
+                stats.visibleInstances++;
+            }
+        }
+    }
 
     // Yellow sun
-    DrawSphere((Vector3){300.0f, 300.0f, 0.0f}, 100.0f, (Color){255, 215, 0, 255});
+    const Vector3 sunPosition = {300.0f, 300.0f, 0.0f};
+    stats.totalInstances++;
+    if (IsSphereInCameraView(camera, sunPosition, 100.0f))
+    {
+        DrawSphere(sunPosition, 100.0f, (Color){255, 215, 0, 255});
+        stats.visibleInstances++;
+    }
+
+    return stats;
 }
