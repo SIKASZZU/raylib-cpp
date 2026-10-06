@@ -1,0 +1,32 @@
+#ifndef GAME_CONFIG_H
+#define GAME_CONFIG_H
+
+#define GRAVITY 32.0f
+#define MAX_SPEED 20.0f
+#define CROUCH_SPEED 5.0f
+#define JUMP_FORCE 55.0f
+#define MAX_ACCEL 2000.0f
+#define PHYSICS_STEP (1.0f / 120.0f)
+#define FRICTION 0.86f
+#define AIR_DRAG 0.98f
+#define CONTROL 15.0f
+#define CROUCH_HEIGHT 0.0f
+
+#define STAND_HEIGHT 1.0f
+#define BOTTOM_HEIGHT 0.5f
+#define PLAYER_RADIUS 0.5f
+#define PLAYER_HEIGHT (BOTTOM_HEIGHT + STAND_HEIGHT)
+
+#define MAP_SIDE_LENGTH 2
+#define WALL_HALF_LENGTH 6.0f
+#define WALL_HALF_THICKNESS 1.2f
+#define WALL_HEIGHT 14.0f
+#define ROTATED_WALL_ANGLE 45.0f
+#define NORMAL_WALL_SCALE 1.5f
+#define LEVEL_TILE_SIZE 20.0f
+#define GROUND_MODEL_SIZE 12.0f
+
+#define SHADOW_MAP_SIZE 2048
+#define SHADOW_CAMERA_SIZE 520.0f
+
+#endif
