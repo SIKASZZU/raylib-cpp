@@ -187,7 +187,7 @@ int main(void)
     UpdateCameraFPS(&camera); // Update camera parameters
 
     DisableCursor(); // Limit cursor to relative movement inside the window
-    SetTargetFPS(0);
+    SetTargetFPS(144);
     float physicsAccumulator = 0.0f;
     bool jumpQueued = false;
     //--------------------------------------------------------------------------------------
@@ -458,20 +458,20 @@ static bool CheckPlayerCollision(Vector3 position)
         (Vector3){position.x - PLAYER_RADIUS, position.y, position.z - PLAYER_RADIUS},
         (Vector3){position.x + PLAYER_RADIUS, position.y + PLAYER_HEIGHT, position.z + PLAYER_RADIUS},
     };
-    const Vector3 towerSize = {16.0f, 32.0f, 16.0f};
-    for (int xSign = -1; xSign <= 1; xSign += 2)
-    {
-        for (int zSign = -1; zSign <= 1; zSign += 2)
-        {
-            Vector3 towerPosition = {16.0f * xSign, 16.0f, 16.0f * zSign};
-            BoundingBox towerBounds = {
-                (Vector3){towerPosition.x - towerSize.x * 0.5f, towerPosition.y - towerSize.y * 0.5f, towerPosition.z - towerSize.z * 0.5f},
-                (Vector3){towerPosition.x + towerSize.x * 0.5f, towerPosition.y + towerSize.y * 0.5f, towerPosition.z + towerSize.z * 0.5f},
-            };
-            if (CheckCollisionBoxes(playerBounds, towerBounds))
-                return true;
-        }
-    }
+    // const Vector3 towerSize = {16.0f, 32.0f, 16.0f};
+    // for (int xSign = -1; xSign <= 1; xSign += 2)
+    // {
+    //     for (int zSign = -1; zSign <= 1; zSign += 2)
+    //     {
+    //         Vector3 towerPosition = {16.0f * xSign, 16.0f, 16.0f * zSign};
+    //         BoundingBox towerBounds = {
+    //             (Vector3){towerPosition.x - towerSize.x * 0.5f, towerPosition.y - towerSize.y * 0.5f, towerPosition.z - towerSize.z * 0.5f},
+    //             (Vector3){towerPosition.x + towerSize.x * 0.5f, towerPosition.y + towerSize.y * 0.5f, towerPosition.z + towerSize.z * 0.5f},
+    //         };
+    //         if (CheckCollisionBoxes(playerBounds, towerBounds))
+    //             return true;
+    //     }
+    // }
 
     return false;
 }
@@ -607,7 +607,7 @@ static RenderStats DrawLevel(Model wall, Model ground, const Camera *camera)
                         (Vector3){0.0f, 1.0f, 0.0f}, // rotate around Y
                         ROTATED_WALL_ANGLE,          // degrees
                         (Vector3){1.0f, 1.0f, 1.0f}, // LIGHTGRAY
-                        RED);
+                        WHITE);
                     stats.visibleInstances++;
                 }
             }
@@ -627,24 +627,24 @@ static RenderStats DrawLevel(Model wall, Model ground, const Camera *camera)
         }
     }
 
-    const Vector3 towerSize = (Vector3){16.0f, 32.0f, 16.0f};
-    const Color towerColor = (Color){150, 200, 200, 255};
-    const float towerRadius = sqrtf(8.0f * 8.0f + 16.0f * 16.0f + 8.0f * 8.0f);
+    // const Vector3 towerSize = (Vector3){16.0f, 32.0f, 16.0f};
+    // const Color towerColor = (Color){150, 200, 200, 255};
+    // const float towerRadius = sqrtf(8.0f * 8.0f + 16.0f * 16.0f + 8.0f * 8.0f);
 
-    for (int xSign = -1; xSign <= 1; xSign += 2)
-    {
-        for (int zSign = -1; zSign <= 1; zSign += 2)
-        {
-            Vector3 towerPos = {16.0f * xSign, 16.0f, 16.0f * zSign};
-            stats.totalInstances++;
-            if (IsSphereInCameraView(camera, towerPos, towerRadius))
-            {
-                DrawCubeV(towerPos, towerSize, towerColor);
-                DrawCubeWiresV(towerPos, towerSize, DARKBLUE);
-                stats.visibleInstances++;
-            }
-        }
-    }
+    // for (int xSign = -1; xSign <= 1; xSign += 2)
+    // {
+    //     for (int zSign = -1; zSign <= 1; zSign += 2)
+    //     {
+    //         Vector3 towerPos = {16.0f * xSign, 16.0f, 16.0f * zSign};
+    //         stats.totalInstances++;
+    //         if (IsSphereInCameraView(camera, towerPos, towerRadius))
+    //         {
+    //             DrawCubeV(towerPos, towerSize, towerColor);
+    //             DrawCubeWiresV(towerPos, towerSize, DARKBLUE);
+    //             stats.visibleInstances++;
+    //         }
+    //     }
+    // }
 
     // Yellow sun
     const Vector3 sunPosition = {300.0f, 300.0f, 0.0f};
