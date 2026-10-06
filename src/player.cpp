@@ -5,8 +5,8 @@
 
 #include <math.h>
 
-static bool CheckCollision(Vector3 position);
-static bool CheckAgainstWall(Vector3 position, Vector3 wallPosition, float halfLength, float halfThickness, float height, float rotation);
+static bool CheckCollision(Vector3 position, const Level *level);
+static bool CheckAgainstWall(Vector3 position, const WallInstance &wall);
 
 void PlayerInitialize(Player *player, Vector3 position)
 {
@@ -14,7 +14,7 @@ void PlayerInitialize(Player *player, Vector3 position)
     player->position = position;
 }
 
-void PlayerUpdate(Player *player, float rotation, char side, char forward, bool jumpPressed, bool crouchHold, float delta)
+void PlayerUpdate(Player *player, const Level *level, float rotation, char side, char forward, bool jumpPressed, bool crouchHold, float delta)
 {
     Vector2 input = {(float)side, (float)-forward};
     if (side != 0 && forward != 0)
@@ -56,14 +56,14 @@ void PlayerUpdate(Player *player, float rotation, char side, char forward, bool 
 
     Vector3 nextPosition = player->position;
     nextPosition.x += player->velocity.x * delta;
-    if (CheckCollision(nextPosition))
+    if (CheckCollision(nextPosition, level))
         player->velocity.x = 0.0f;
     else
         player->position.x = nextPosition.x;
 
     nextPosition = player->position;
     nextPosition.z += player->velocity.z * delta;
-    if (CheckCollision(nextPosition))
+    if (CheckCollision(nextPosition, level))
         player->velocity.z = 0.0f;
     else
         player->position.z = nextPosition.z;
@@ -92,40 +92,31 @@ float PlayerGetHorizontalSpeed(const Player *player)
     return Vector2Length(Vector2{player->velocity.x, player->velocity.z});
 }
 
-static bool CheckCollision(Vector3 position)
+static bool CheckCollision(Vector3 position, const Level *level)
 {
-    for (int z = -MAP_SIDE_LENGTH; z < MAP_SIDE_LENGTH; z++)
+    for (const WallInstance &wall : level->walls)
     {
-        for (int x = -MAP_SIDE_LENGTH; x < MAP_SIDE_LENGTH; x++)
-        {
-            Vector3 wallPosition = {x * LEVEL_TILE_SIZE, 0.0f, z * LEVEL_TILE_SIZE};
-            if ((z & 1) && (x & 1))
-            {
-                if (CheckAgainstWall(position, wallPosition, WALL_HALF_LENGTH, WALL_HALF_THICKNESS,
-                                    WALL_HEIGHT, ROTATED_WALL_ANGLE * DEG2RAD))
-                    return true;
-            }
-            else if (!(z & 1) && !(x & 1))
-            {
-                if (CheckAgainstWall(position, wallPosition, WALL_HALF_LENGTH * NORMAL_WALL_SCALE,
-                                    WALL_HALF_THICKNESS * NORMAL_WALL_SCALE, WALL_HEIGHT * NORMAL_WALL_SCALE, 0.0f))
-                    return true;
-            }
-        }
+        if (CheckAgainstWall(position, wall))
+            return true;
     }
 
     return false;
 }
 
-static bool CheckAgainstWall(Vector3 position, Vector3 wallPosition, float halfLength, float halfThickness, float height, float rotation)
+static bool CheckAgainstWall(Vector3 position, const WallInstance &wall)
 {
-    if (position.y > height || position.y + PLAYER_HEIGHT < 0.0f)
+    const float height = WALL_HEIGHT * wall.scale;
+    const float halfLength = WALL_HALF_LENGTH * wall.scale;
+    const float halfThickness = WALL_HALF_THICKNESS * wall.scale;
+    const float rotation = wall.rotationDegrees * DEG2RAD;
+
+    if (position.y > wall.position.y + height || position.y + PLAYER_HEIGHT < wall.position.y)
         return false;
 
     float cosRotation = cosf(rotation);
     float sinRotation = sinf(rotation);
-    float offsetX = position.x - wallPosition.x;
-    float offsetZ = position.z - wallPosition.z;
+    float offsetX = position.x - wall.position.x;
+    float offsetZ = position.z - wall.position.z;
     float localX = cosRotation * offsetX - sinRotation * offsetZ;
     float localZ = sinRotation * offsetX + cosRotation * offsetZ;
     float closestX = Clamp(localX, -halfLength, halfLength);

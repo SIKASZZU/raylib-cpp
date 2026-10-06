@@ -1,5 +1,5 @@
 #include "scene_renderer.hpp"
-
+#include "rlgl.h"
 #include "game_config.hpp"
 #include "raymath.h"
 
@@ -7,7 +7,7 @@
 
 static bool IsSphereInCameraView(const Camera *camera, Vector3 center, float radius);
 
-void DrawShadowCasters(Model wall, Model ground)
+void DrawShadowCasters(Model wall, Model ground, const Level *level)
 {
     const float groundScale = LEVEL_TILE_SIZE / GROUND_MODEL_SIZE;
     for (int z = -MAP_SIDE_LENGTH; z < MAP_SIDE_LENGTH; z++)
@@ -16,28 +16,22 @@ void DrawShadowCasters(Model wall, Model ground)
         {
             Vector3 position = {x * LEVEL_TILE_SIZE, 0.0f, z * LEVEL_TILE_SIZE};
             DrawModel(ground, position, groundScale, WHITE);
-
-            if ((z & 1) && (x & 1))
-            {
-                DrawModelEx(wall, position, Vector3{0.0f, 1.0f, 0.0f},
-                            ROTATED_WALL_ANGLE, Vector3{1.0f, 1.0f, 1.0f}, WHITE);
-            }
-            else if (!(z & 1) && !(x & 1))
-            {
-                DrawModel(wall, position, NORMAL_WALL_SCALE, WHITE);
-            }
         }
+    }
+
+    for (const WallInstance &instance : level->walls)
+    {
+        DrawModelEx(wall, instance.position, Vector3{0.0f, 1.0f, 0.0f},
+                    instance.rotationDegrees,
+                    Vector3{instance.scale, instance.scale, instance.scale}, WHITE);
     }
 }
 
-RenderStats DrawLevel(Model wall, Model ground, const Camera *camera)
+RenderStats DrawLevel(Model wall, Model ground, const Level *level, const Camera *camera)
 {
     const float groundScale = LEVEL_TILE_SIZE / GROUND_MODEL_SIZE;
     const float groundRadius = sqrtf(2.0f * LEVEL_TILE_SIZE * LEVEL_TILE_SIZE * 0.25f +
                                      0.25f * groundScale * groundScale);
-    const float wallRadiusBase = sqrtf(WALL_HALF_LENGTH * WALL_HALF_LENGTH +
-                                       (WALL_HEIGHT * 0.5f + 0.2f) * (WALL_HEIGHT * 0.5f + 0.2f) +
-                                       1.4f * 1.4f);
     RenderStats stats = {};
 
     for (int z = -MAP_SIDE_LENGTH; z < MAP_SIDE_LENGTH; z++)
@@ -53,33 +47,39 @@ RenderStats DrawLevel(Model wall, Model ground, const Camera *camera)
                 DrawModel(ground, position, groundScale, WHITE);
                 stats.visibleInstances++;
             }
+        }
+    }
 
-            // rotated walls
-            if ((z & 1) && (x & 1))
-            {
-                stats.totalInstances++;
-                if (IsSphereInCameraView(camera, Vector3{position.x, WALL_HEIGHT * 0.5f, position.z}, wallRadiusBase))
-                {
-                    position.y += 5.0f;
-                    DrawModelEx(wall, position, Vector3{0.0f, 1.0f, 0.0f},
-                                ROTATED_WALL_ANGLE, Vector3{1.0f, 1.0f, 1.0f}, WHITE);
-                    stats.visibleInstances++;
-                }
-            }
+    for (const WallInstance &instance : level->walls)
+    {
+        stats.totalInstances++;
+        const float halfLength = WALL_HALF_LENGTH * instance.scale;
+        const float halfThickness = WALL_HALF_THICKNESS * instance.scale;
+        const float height = WALL_HEIGHT * instance.scale;
+        const float wallRadius = sqrtf(halfLength * halfLength +
+                                       halfThickness * halfThickness +
+                                       height * height * 0.25f);
+        const Vector3 center = {instance.position.x,
+                                instance.position.y + height * 0.5f,
+                                instance.position.z};
 
-            // normal walls
-            else if (!(z & 1) && !(x & 1))
-            {
-                const float wallScale = NORMAL_WALL_SCALE;
-                stats.totalInstances++;
-                if (IsSphereInCameraView(camera,
-                                         Vector3{position.x, WALL_HEIGHT * wallScale * 0.5f, position.z},
-                                         wallRadiusBase * wallScale))
-                {
-                    DrawModel(wall, position, wallScale, WHITE);
-                    stats.visibleInstances++;
-                }
-            }
+        if (IsSphereInCameraView(camera, center, wallRadius))
+        {
+            DrawModelEx(wall, instance.position, Vector3{0.0f, 1.0f, 0.0f},
+                        instance.rotationDegrees,
+                        Vector3{instance.scale, instance.scale, instance.scale}, WHITE);
+            stats.visibleInstances++;
+            rlPushMatrix();
+            rlTranslatef(instance.position.x,
+                         instance.position.y + height * 0.5f,
+                         instance.position.z);
+            rlRotatef(instance.rotationDegrees, 0.0f, 1.0f, 0.0f);
+            DrawCubeWires({0.0f, 0.0f, 0.0f},
+                          WALL_HALF_LENGTH * instance.scale * 2.0f,
+                          height,
+                          WALL_HALF_THICKNESS * instance.scale * 2.0f,
+                          RED);
+            rlPopMatrix();
         }
     }
 

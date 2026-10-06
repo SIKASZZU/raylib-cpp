@@ -2,6 +2,7 @@
 #define PLAYER_H
 
 #include "raylib.h"
+#include "level.hpp"
 
 typedef struct
 {
@@ -12,7 +13,7 @@ typedef struct
 } Player;
 
 void PlayerInitialize(Player *player, Vector3 position);
-void PlayerUpdate(Player *player, float rotation, char side, char forward, bool jumpPressed, bool crouchHold, float delta);
+void PlayerUpdate(Player *player, const Level *level, float rotation, char side, char forward, bool jumpPressed, bool crouchHold, float delta);
 float PlayerGetHorizontalSpeed(const Player *player);
 
 #endif

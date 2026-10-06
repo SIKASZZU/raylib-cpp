@@ -9,7 +9,7 @@ static void SetModelShader(Model *model, Shader shader);
 static RenderTexture2D LoadShadowMapRenderTexture(int width, int height);
 static void UnloadShadowMapRenderTexture(RenderTexture2D target);
 
-bool ShaderSystemInitialize(ShaderSystem *system, Model *wall, Model *ground)
+bool ShaderSystemInitialize(ShaderSystem *system, Model *wall, Model *ground, const Level *level)
 {
     *system = {};
 
@@ -46,7 +46,6 @@ bool ShaderSystemInitialize(ShaderSystem *system, Model *wall, Model *ground)
     system->lightCamera.fovy = SHADOW_CAMERA_SIZE;
     system->lightCamera.projection = CAMERA_ORTHOGRAPHIC;
 
-    // PASS 1: Render the static scene from the light into an actual depth texture.
     SetModelShader(wall, system->depth);
     SetModelShader(ground, system->depth);
 
@@ -57,12 +56,10 @@ bool ShaderSystemInitialize(ShaderSystem *system, Model *wall, Model *ground)
     ClearBackground(WHITE);
     BeginMode3D(system->lightCamera);
 
-    // Capture the exact matrices raylib used for this pass instead of rebuilding them
-    // independently and hoping every near/far/aspect convention matches.
     lightView = rlGetMatrixModelview();
     lightProjection = rlGetMatrixProjection();
 
-    DrawShadowCasters(*wall, *ground);
+    DrawShadowCasters(*wall, *ground, level);
 
     EndMode3D();
     EndTextureMode();
@@ -90,6 +87,22 @@ bool ShaderSystemInitialize(ShaderSystem *system, Model *wall, Model *ground)
     SetModelShader(ground, system->lighting);
 
     return true;
+}
+
+void ShaderSystemUpdateShadowMap(ShaderSystem *system, Model *wall, Model *ground, const Level *level)
+{
+    SetModelShader(wall, system->depth);
+    SetModelShader(ground, system->depth);
+
+    BeginTextureMode(system->shadowMap);
+    ClearBackground(WHITE);
+    BeginMode3D(system->lightCamera);
+    DrawShadowCasters(*wall, *ground, level);
+    EndMode3D();
+    EndTextureMode();
+
+    SetModelShader(wall, system->lighting);
+    SetModelShader(ground, system->lighting);
 }
 
 void ShaderSystemBeginLighting(ShaderSystem *system)

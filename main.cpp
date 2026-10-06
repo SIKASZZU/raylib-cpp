@@ -3,6 +3,7 @@
 
 #include "src/camera_controller.hpp"
 #include "src/game_config.hpp"
+#include "src/level.hpp"
 #include "src/player.hpp"
 #include "src/scene_renderer.hpp"
 #include "src/shader_system.hpp"
@@ -17,8 +18,11 @@ int main(void)
     Model wall = LoadModel("resources/wall/maze_wall.obj");
     Model ground = LoadModel("resources/ground/maze_ground.obj");
 
+    Level level = {};
+    LevelInitialize(&level);
+
     ShaderSystem shaders = {};
-    if (!ShaderSystemInitialize(&shaders, &wall, &ground))
+    if (!ShaderSystemInitialize(&shaders, &wall, &ground, &level))
     {
         UnloadModel(wall);
         UnloadModel(ground);
@@ -56,7 +60,7 @@ int main(void)
         jumpQueued = jumpQueued || IsKeyPressed(KEY_SPACE);
         while (physicsAccumulator >= PHYSICS_STEP)
         {
-            PlayerUpdate(&player, CameraControllerGetYaw(&cameraController),
+            PlayerUpdate(&player, &level, CameraControllerGetYaw(&cameraController),
                          sideway, forward, jumpQueued, crouching, PHYSICS_STEP);
             jumpQueued = false;
             physicsAccumulator -= PHYSICS_STEP;
@@ -66,6 +70,8 @@ int main(void)
                                sideway, forward, crouching, delta);
         Camera camera = CameraControllerGetCamera(&cameraController);
 
+        ShaderSystemUpdateShadowMap(&shaders, &wall, &ground, &level);
+
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
@@ -73,7 +79,7 @@ int main(void)
 
         BeginMode3D(camera);
         ShaderSystemBeginLighting(&shaders);
-        RenderStats renderStats = DrawLevel(wall, ground, &camera);
+        RenderStats renderStats = DrawLevel(wall, ground, &level, &camera);
         ShaderSystemEndLighting();
         EndMode3D();
 

@@ -2,6 +2,7 @@
 #define SCENE_RENDERER_H
 
 #include "raylib.h"
+#include "level.hpp"
 
 typedef struct
 {
@@ -9,7 +10,7 @@ typedef struct
     int visibleInstances;
 } RenderStats;
 
-RenderStats DrawLevel(Model wall, Model ground, const Camera *camera);
-void DrawShadowCasters(Model wall, Model ground);
+RenderStats DrawLevel(Model wall, Model ground, const Level *level, const Camera *camera);
+void DrawShadowCasters(Model wall, Model ground, const Level *level);
 
 #endif
