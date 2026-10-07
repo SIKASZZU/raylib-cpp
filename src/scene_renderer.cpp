@@ -33,8 +33,10 @@ static bool SphereVisible(const ViewFrustum &f, Vector3 center, float radius)
     const Vector3 o = Vector3Subtract(center, f.pos);
     const float depth = Vector3DotProduct(o, f.fwd);
 
-    if (depth + radius < NEAR_PLANE) return false;
-    if (depth - radius > f.farDist) return false; // far plane
+    if (depth + radius < NEAR_PLANE)
+        return false;
+    if (depth - radius > f.farDist)
+        return false; // far plane
 
     const float h = fabsf(Vector3DotProduct(o, f.right));
     const float v = fabsf(Vector3DotProduct(o, f.up));
@@ -107,7 +109,8 @@ void SceneRenderer_Init(SceneRenderer &r, Model ground, const Level *level)
     for (size_t ci = 0; ci < r.cells.size(); ci++)
     {
         WallCell &cell = r.cells[ci];
-        if (cell.walls.empty()) continue;
+        if (cell.walls.empty())
+            continue;
         cell.center = Vector3Scale(Vector3Add(cellMin[ci], cellMax[ci]), 0.5f);
         cell.radius = Vector3Length(Vector3Subtract(cellMax[ci], cellMin[ci])) * 0.5f;
         nonEmpty.push_back(std::move(cell));
@@ -128,11 +131,11 @@ void SceneRenderer_Unload(SceneRenderer &r)
 // later, add a range test against the wall centers.
 void DrawShadowCasters(Model wall, const Level *level)
 {
-    for (const WallInstance &w : level->walls)
-    {
-        DrawModelEx(wall, w.position, Vector3{0, 1, 0}, w.rotationDegrees,
-                    Vector3{w.scale, w.scale, w.scale}, WHITE);
-    }
+    // for (const WallInstance &w : level->walls)
+    // {
+    //     DrawModelEx(wall, w.position, Vector3{0, 1, 0}, w.rotationDegrees,
+    //                 Vector3{w.scale, w.scale, w.scale}, WHITE);
+    // }
 }
 
 // ---- main pass ----
@@ -154,11 +157,13 @@ RenderStats DrawLevel(SceneRenderer &r, Model wall, const Level *level, const Ca
     for (const WallCell &cell : r.cells)
     {
         stats.totalInstances += (int)cell.walls.size();
-        if (!SphereVisible(f, cell.center, cell.radius)) continue;
+        if (!SphereVisible(f, cell.center, cell.radius))
+            continue;
 
         for (int i : cell.walls)
         {
-            if (!SphereVisible(f, r.wallCenter[i], r.wallRadius[i])) continue;
+            if (!SphereVisible(f, r.wallCenter[i], r.wallRadius[i]))
+                continue;
             r.visibleTransforms.push_back(r.wallTransform[i]);
             r.visibleIdx.push_back(i);
             stats.visibleInstances++;

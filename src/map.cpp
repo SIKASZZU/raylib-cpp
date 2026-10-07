@@ -55,8 +55,8 @@ namespace MapGenerator
         voidPossibleLocations.clear();
 
         generate_ground();
-        // generate_mazes();
-        // generate_glade(terrainMap);
+        generate_mazes();
+        generate_glade(terrainMap);
         // generate_cliffs();
         // generate_tunnels();
     }

@@ -4,7 +4,7 @@
 
 // physics
 #define GRAVITY 32.0f
-#define MAX_SPEED 20.0f
+#define MAX_SPEED 100.0f
 #define CROUCH_SPEED 5.0f
 #define JUMP_FORCE 55.0f
 #define MAX_ACCEL 2000.0f
@@ -26,7 +26,7 @@
 #define CHUNK_SIZE 32.0f
 
 // map // shaders
-#define MAP_SIDE_LENGTH 5
+#define MAP_SIDE_LENGTH 325
 #define WALL_HALF_LENGTH 6.0f
 #define WALL_HALF_THICKNESS 1.2f
 #define WALL_HEIGHT 14.0f

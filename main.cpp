@@ -31,8 +31,10 @@ int main(void)
         CloseWindow();
         return 1;
     }
+
     Player player = {};
     PlayerInitialize(&player, Vector3{7.0f, 0.0f, 7.0f});
+
     SceneRenderer scene = {};
     SceneRenderer_Init(scene, ground, &level);
 
@@ -74,23 +76,24 @@ int main(void)
                                sideway, forward, crouching, delta);
         Camera camera = CameraControllerGetCamera(&cameraController);
 
-        ShaderSystemUpdateShadowMap(&shaders, &wall, &level);
+        // ShaderSystemUpdateShadowMap(&shaders, &wall, &level);
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        ShaderSystemSetShadowMask(&shaders, showShadowMask);
+        // shader disable
+        // ShaderSystemSetShadowMask(&shaders, showShadowMask);
 
         BeginMode3D(camera);
-        ShaderSystemBeginLighting(&shaders);
-        RenderStats renderStats = DrawLevel(scene, ground, &level, &camera);
-        ShaderSystemEndLighting();
+        // ShaderSystemBeginLighting(&shaders);
+        RenderStats renderStats = DrawLevel(scene, wall, &level, &camera);
+        // ShaderSystemEndLighting();
         EndMode3D();
 
-        DrawRectangle(5, 5, 440, 110, Fade(SKYBLUE, 0.5f));
-        DrawRectangleLines(5, 5, 440, 110, BLUE);
+        DrawRectangle(5, 5, 440, 130, Fade(SKYBLUE, 0.5f));
+        DrawRectangleLines(5, 5, 440, 130, BLUE);
 
-        Color textColor = GREEN;
+        Color textColor = RED;
         DrawText("Camera controls:", 15, 15, 10, textColor);
         DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, textColor);
         DrawText("- Look around: arrow keys or mouse", 15, 45, 10, textColor);
@@ -101,6 +104,7 @@ int main(void)
                             renderStats.totalInstances - renderStats.visibleInstances),
                  15, 90, 10, textColor);
         DrawText(TextFormat("- Draw calls: %d", renderStats.drawCalls), 15, 105, 10, textColor);
+        DrawText(TextFormat("- Wall count: %d", level.walls.size()), 15, 120, 10, textColor);
         DrawFPS(10, screenHeight - 20); // fps
 
         EndDrawing();
@@ -108,7 +112,7 @@ int main(void)
     SceneRenderer_Unload(scene); // add
     UnloadModel(wall);
     UnloadModel(ground);
-    ShaderSystemUnload(&shaders);
+    // ShaderSystemUnload(&shaders);
     CloseWindow();
 
     return 0;
