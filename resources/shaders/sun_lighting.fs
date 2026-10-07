@@ -12,6 +12,10 @@ uniform vec4 colDiffuse;
 uniform vec3 lightDirection;
 uniform vec2 shadowTexelSize;
 uniform int showShadowMask;
+uniform vec3 viewPos;
+uniform vec3 fogColor;
+uniform float fogStart;
+uniform float fogEnd;
 
 out vec4 finalColor;
 
@@ -29,7 +33,8 @@ float ShadowVisibility(vec3 normal, vec3 toLight)
 
     // Slope-scaled bias. A 24-bit depth texture needs much less bias than the
     // old packed RGBA8 path, which helps prevent shadows from detaching.
-    float bias = max(0.0002 * (1.0 - dot(normal, toLight)), 0.00002) + 0.00001;
+    float cosTheta = max(dot(normal, toLight), 0.0);
+    float bias = max(0.0002 * (1.0 - cosTheta), 0.00002) + 0.00001;
 
     float visibility = 0.0;
     for (int x = -1; x <= 1; x++)
@@ -49,18 +54,22 @@ void main()
 {
     vec4 albedo = texture(texture0, fragTexCoord) * colDiffuse * fragColor;
     vec3 normal = normalize(fragWorldNormal);
-
-    // The ground mesh contains top-facing geometry; this keeps malformed/downward
-    // floor normals from making the directional lighting misleading while debugging.
-    if (normal.y < -0.95)
-        normal = -normal;
-
     vec3 toLight = normalize(lightDirection);
+
+    if (showShadowMask == 2)
+    {
+        // Debug: raw shadow map at this pixel's position in the sun's view (red = outside the box).
+        vec3 sc = (fragLightPosition.xyz / fragLightPosition.w) * 0.5 + 0.5;
+        bool outside = any(lessThan(sc, vec3(0.0))) || any(greaterThan(sc, vec3(1.0)));
+        float stored = texture(shadowMap, sc.xy).r;
+        finalColor = outside ? vec4(1.0, 0.0, 0.0, 1.0) : vec4(vec3(stored), 1.0);
+        return;
+    }
+
     float visibility = ShadowVisibility(normal, toLight);
 
-    if (showShadowMask != 0)
+    if (showShadowMask == 1)
     {
-        // White = visible to the sun, black = shadowed by the depth test.
         finalColor = vec4(vec3(step(0.5, visibility)), 1.0);
         return;
     }
@@ -68,6 +77,10 @@ void main()
     float diffuse = max(dot(normal, toLight), 0.0);
     vec3 ambient = vec3(0.30);
     vec3 direct = vec3(0.95, 0.87, 0.70) * diffuse * visibility;
+    vec3 lit = albedo.rgb * (ambient + direct);
 
-    finalColor = vec4(albedo.rgb * (ambient + direct), albedo.a);
+    float dist = length(viewPos - fragWorldPosition);
+    float fog = smoothstep(fogStart, fogEnd, dist);
+
+    finalColor = vec4(mix(lit, fogColor, fog), albedo.a);
 }

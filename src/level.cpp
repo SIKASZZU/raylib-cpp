@@ -30,13 +30,10 @@ void LevelInitialize(Level *level)
 
     level->walls.clear();
     level->groundTiles.clear();
-    level->mapWidth = MAP_SIDE_LENGTH;
     level->groundIndexByTile.assign(MAP_SIDE_LENGTH * MAP_SIDE_LENGTH, -1);
     level->wallIndexByTile.assign(MAP_SIDE_LENGTH * MAP_SIDE_LENGTH, -1);
 
     const int mapCenter = MAP_SIDE_LENGTH / 2;
-    // const float wallScale = LEVEL_TILE_SIZE / (2.0f * WALL_HALF_LENGTH);
-    const float wallScale = 1.5f;
 
     for (int z = 0; z < MAP_SIDE_LENGTH; z++)
     {
@@ -58,7 +55,6 @@ void LevelInitialize(Level *level)
 
             WallInstance wall = {};
             wall.position = {worldX, 0.0f, worldZ};
-            wall.scale = wallScale;
 
             const bool wallWest = x > 0 && IsWallTile(terrainMap[get_map_index(x - 1, z)]);
             const bool wallEast = x + 1 < MAP_SIDE_LENGTH && IsWallTile(terrainMap[get_map_index(x + 1, z)]);

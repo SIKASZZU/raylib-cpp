@@ -30,7 +30,10 @@ Run from the repository root so model and shader resource paths resolve:
 - `src/shader_system.*`: lighting shader and shadow-map setup
 - `resources/shaders/`: GLSL shader sources
 
-Walls are stored as mutable `WallInstance` values in `Level::walls`. Rendering,
-shadow casting, and player collision all read the same position, rotation, and
-scale. Update a wall instance's transform to move it; the shadow map is refreshed
-each frame to reflect those changes.
+Wall dimensions are configured in `src/game_config.hpp`. The renderer fits the
+wall model's local-space bounds to those dimensions, and player collision and
+frustum culling use the same configured dimensions. Change `WALL_HALF_LENGTH`,
+`WALL_HALF_THICKNESS`, or `WALL_HEIGHT` there to resize walls without separately
+adjusting collision. Walls are stored as `WallInstance` values in
+`Level::walls`; their position and rotation are shared by rendering and
+collision.

@@ -7,7 +7,6 @@
 #include "src/level.hpp"
 #include "src/player.hpp"
 #include "src/scene_renderer.hpp"
-#include "src/shader_system.hpp"
 
 int main(void)
 {
@@ -15,7 +14,7 @@ int main(void)
     const int screenHeight = 900;
 
     InitWindow(screenWidth, screenHeight, "raylib");
-    rlSetClipPlanes(NEAR_PLANE, FAR_PLANE);
+    rlSetClipPlanes(LIGHT_NEAR, LIGHT_FAR);
 
     Model wall = LoadModel("resources/wall/maze_wall.obj");
     Model ground = LoadModel("resources/ground/maze_ground.obj");
@@ -23,20 +22,8 @@ int main(void)
     Level level = {};
     LevelInitialize(&level);
 
-    ShaderSystem shaders = {};
-    if (!ShaderSystemInitialize(&shaders, &wall, &ground, &level))
-    {
-        UnloadModel(wall);
-        UnloadModel(ground);
-        CloseWindow();
-        return 1;
-    }
-
     Player player = {};
     PlayerInitialize(&player, Vector3{7.0f, 0.0f, 7.0f});
-
-    SceneRenderer scene = {};
-    SceneRenderer_Init(scene, ground, &level);
 
     CameraController cameraController = {};
     CameraControllerInitialize(&cameraController, player.position);
@@ -46,14 +33,12 @@ int main(void)
 
     float physicsAccumulator = 0.0f;
     bool jumpQueued = false;
-    bool showShadowMask = false;
+    int showShadowMode = 0;
 
     while (!WindowShouldClose())
     {
         if (IsKeyPressed(KEY_F3))
-        {
-            showShadowMask = !showShadowMask;
-        }
+            showShadowMode = (showShadowMode + 1) % 3;
 
         float delta = GetFrameTime();
         CameraControllerApplyMouse(&cameraController, GetMouseDelta());
@@ -76,18 +61,11 @@ int main(void)
                                sideway, forward, crouching, delta);
         Camera camera = CameraControllerGetCamera(&cameraController);
 
-        // ShaderSystemUpdateShadowMap(&shaders, &wall, &level);
-
         BeginDrawing();
-        ClearBackground(RAYWHITE);
-
-        // shader disable
-        // ShaderSystemSetShadowMask(&shaders, showShadowMask);
+        ClearBackground(Color{SKY_R, SKY_G, SKY_B, 255});
 
         BeginMode3D(camera);
-        // ShaderSystemBeginLighting(&shaders);
-        RenderStats renderStats = DrawLevel(scene, wall, &level, &camera);
-        // ShaderSystemEndLighting();
+        RenderStats renderStats = DrawLevel(wall, ground, &level, &camera);
         EndMode3D();
 
         DrawRectangle(5, 5, 440, 130, Fade(SKYBLUE, 0.5f));
@@ -98,7 +76,7 @@ int main(void)
         DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, textColor);
         DrawText("- Look around: arrow keys or mouse", 15, 45, 10, textColor);
         DrawText(TextFormat("- Velocity Len: (%06.3f)", PlayerGetHorizontalSpeed(&player)), 15, 60, 10, textColor);
-        DrawText(TextFormat("- Shadow mask (F3): %s", showShadowMask ? "ON" : "OFF"), 15, 75, 10, textColor);
+        DrawText(TextFormat("- Shadow debug (F3): %d", showShadowMode), 15, 75, 10, BLACK);
         DrawText(TextFormat("- In-frustum instances: %d / %d (%d culled)",
                             renderStats.visibleInstances, renderStats.totalInstances,
                             renderStats.totalInstances - renderStats.visibleInstances),
@@ -109,10 +87,9 @@ int main(void)
 
         EndDrawing();
     }
-    SceneRenderer_Unload(scene); // add
     UnloadModel(wall);
     UnloadModel(ground);
-    // ShaderSystemUnload(&shaders);
+    CloseWindow();
     CloseWindow();
 
     return 0;

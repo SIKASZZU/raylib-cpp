@@ -21,23 +21,38 @@
 #define PLAYER_HEIGHT (BOTTOM_HEIGHT + STAND_HEIGHT)
 
 // rendering
-#define NEAR_PLANE 0.1f
-#define FAR_PLANE 500.0f
 #define CHUNK_SIZE 32.0f
+constexpr float LIGHT_NEAR = 1.0f;
+constexpr float LIGHT_FAR = 500.0f;
 
-// map // shaders
-#define MAP_SIDE_LENGTH 325
-#define WALL_HALF_LENGTH 6.0f
-#define WALL_HALF_THICKNESS 1.2f
-#define WALL_HEIGHT 14.0f
-#define ROTATED_WALL_ANGLE 45.0f
-#define NORMAL_WALL_SCALE 1.5f
+// map
+#define MAP_SIDE_LENGTH 100
 #define LEVEL_TILE_SIZE 20.0f
-#define GROUND_MODEL_SIZE 12.0f
+#define GROUND_MODEL_SCALE 1.5f
+
+#define WALL_HALF_LENGTH (LEVEL_TILE_SIZE * 0.5f)
+#define WALL_HALF_THICKNESS 1.2f // TODO: WRONG
+#define WALL_HEIGHT (LEVEL_TILE_SIZE)
+#define WALL_MODEL_SCALE 1.5f
+
+// Local-space bounds of resources/wall/maze_wall.obj; used to fit the model
+// to the configured collision dimensions.
+#define WALL_MODEL_HALF_LENGTH 6.0f
+#define WALL_MODEL_HALF_THICKNESS 1.37f
+#define WALL_MODEL_MIN_Y (-0.175f)
+#define WALL_MODEL_HEIGHT 14.35f
+
+// shaders
 #define SHADOW_MAP_SIZE 2048
 #define SHADOW_CAMERA_SIZE 160.0f
-
 static const int SHADOW_TEXTURE_SLOT = 10;
+
+// fog
+constexpr unsigned char SKY_R = 190;
+constexpr unsigned char SKY_G = 205;
+constexpr unsigned char SKY_B = 225;
+constexpr float FOG_START = 150.0f;
+constexpr float FOG_END = 450.0f; // keep this at or below the far plane (500)
 
 // debug
 #define DEBUG_WALL_BOUNDS true

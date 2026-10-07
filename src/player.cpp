@@ -105,9 +105,9 @@ static bool CheckCollision(Vector3 position, const Level *level)
 
 static bool CheckAgainstWall(Vector3 position, const WallInstance &wall)
 {
-    const float height = WALL_HEIGHT * wall.scale;
-    const float halfLength = WALL_HALF_LENGTH * wall.scale;
-    const float halfThickness = WALL_HALF_THICKNESS * wall.scale;
+    const float height = WALL_HEIGHT;
+    const float halfLength = WALL_HALF_LENGTH;
+    const float halfThickness = WALL_HALF_THICKNESS;
     const float rotation = wall.rotationDegrees * DEG2RAD;
 
     if (position.y > wall.position.y + height || position.y + PLAYER_HEIGHT < wall.position.y)
