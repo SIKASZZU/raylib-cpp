@@ -15,7 +15,7 @@ typedef struct
 } ShaderSystem;
 
 bool ShaderSystemInitialize(ShaderSystem *system, Model *wall, Model *ground, const Level *level);
-void ShaderSystemUpdateShadowMap(ShaderSystem *system, Model *wall, Model *ground, const Level *level);
+void ShaderSystemUpdateShadowMap(ShaderSystem *system, Model *wall, const Level *level);
 void ShaderSystemBeginLighting(ShaderSystem *system);
 void ShaderSystemEndLighting(void);
 void ShaderSystemSetShadowMask(ShaderSystem *system, bool enabled);

@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "raymath.h"
+#include "rlgl.h"
 
 #include "src/camera_controller.hpp"
 #include "src/game_config.hpp"
@@ -13,7 +14,8 @@ int main(void)
     const int screenWidth = 1440;
     const int screenHeight = 900;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera fps");
+    InitWindow(screenWidth, screenHeight, "raylib");
+    rlSetClipPlanes(NEAR_PLANE, FAR_PLANE);
 
     Model wall = LoadModel("resources/wall/maze_wall.obj");
     Model ground = LoadModel("resources/ground/maze_ground.obj");
@@ -31,6 +33,8 @@ int main(void)
     }
     Player player = {};
     PlayerInitialize(&player, Vector3{7.0f, 0.0f, 7.0f});
+    SceneRenderer scene = {};
+    SceneRenderer_Init(scene, ground, &level);
 
     CameraController cameraController = {};
     CameraControllerInitialize(&cameraController, player.position);
@@ -70,7 +74,7 @@ int main(void)
                                sideway, forward, crouching, delta);
         Camera camera = CameraControllerGetCamera(&cameraController);
 
-        ShaderSystemUpdateShadowMap(&shaders, &wall, &ground, &level);
+        ShaderSystemUpdateShadowMap(&shaders, &wall, &level);
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
@@ -79,25 +83,29 @@ int main(void)
 
         BeginMode3D(camera);
         ShaderSystemBeginLighting(&shaders);
-        RenderStats renderStats = DrawLevel(wall, ground, &level, &camera);
+        RenderStats renderStats = DrawLevel(scene, ground, &level, &camera);
         ShaderSystemEndLighting();
         EndMode3D();
 
         DrawRectangle(5, 5, 440, 110, Fade(SKYBLUE, 0.5f));
         DrawRectangleLines(5, 5, 440, 110, BLUE);
-        DrawText("Camera controls:", 15, 15, 10, BLACK);
-        DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, BLACK);
-        DrawText("- Look around: arrow keys or mouse", 15, 45, 10, BLACK);
-        DrawText(TextFormat("- Velocity Len: (%06.3f)", PlayerGetHorizontalSpeed(&player)), 15, 60, 10, BLACK);
-        DrawText(TextFormat("- Shadow mask (F3): %s", showShadowMask ? "ON" : "OFF"), 15, 75, 10, BLACK);
+
+        Color textColor = GREEN;
+        DrawText("Camera controls:", 15, 15, 10, textColor);
+        DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, textColor);
+        DrawText("- Look around: arrow keys or mouse", 15, 45, 10, textColor);
+        DrawText(TextFormat("- Velocity Len: (%06.3f)", PlayerGetHorizontalSpeed(&player)), 15, 60, 10, textColor);
+        DrawText(TextFormat("- Shadow mask (F3): %s", showShadowMask ? "ON" : "OFF"), 15, 75, 10, textColor);
         DrawText(TextFormat("- In-frustum instances: %d / %d (%d culled)",
                             renderStats.visibleInstances, renderStats.totalInstances,
                             renderStats.totalInstances - renderStats.visibleInstances),
-                 15, 90, 10, BLACK);
-        DrawFPS(10, screenHeight - 20);
+                 15, 90, 10, textColor);
+        DrawText(TextFormat("- Draw calls: %d", renderStats.drawCalls), 15, 105, 10, textColor);
+        DrawFPS(10, screenHeight - 20); // fps
+
         EndDrawing();
     }
-
+    SceneRenderer_Unload(scene); // add
     UnloadModel(wall);
     UnloadModel(ground);
     ShaderSystemUnload(&shaders);

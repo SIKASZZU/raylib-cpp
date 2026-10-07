@@ -1,6 +1,8 @@
+
 #ifndef GAME_CONFIG_H
 #define GAME_CONFIG_H
 
+// physics
 #define GRAVITY 32.0f
 #define MAX_SPEED 20.0f
 #define CROUCH_SPEED 5.0f
@@ -10,14 +12,21 @@
 #define FRICTION 0.86f
 #define AIR_DRAG 0.98f
 #define CONTROL 15.0f
-#define CROUCH_HEIGHT 0.0f
 
+// player
 #define STAND_HEIGHT 1.0f
 #define BOTTOM_HEIGHT 0.5f
 #define PLAYER_RADIUS 0.5f
+#define CROUCH_HEIGHT 0.0f
 #define PLAYER_HEIGHT (BOTTOM_HEIGHT + STAND_HEIGHT)
 
-#define MAP_SIDE_LENGTH 2
+// rendering
+#define NEAR_PLANE 0.1f
+#define FAR_PLANE 500.0f
+#define CHUNK_SIZE 32.0f
+
+// map // shaders
+#define MAP_SIDE_LENGTH 5
 #define WALL_HALF_LENGTH 6.0f
 #define WALL_HALF_THICKNESS 1.2f
 #define WALL_HEIGHT 14.0f
@@ -25,8 +34,12 @@
 #define NORMAL_WALL_SCALE 1.5f
 #define LEVEL_TILE_SIZE 20.0f
 #define GROUND_MODEL_SIZE 12.0f
-
 #define SHADOW_MAP_SIZE 2048
 #define SHADOW_CAMERA_SIZE 160.0f
+
 static const int SHADOW_TEXTURE_SLOT = 10;
+
+// debug
+#define DEBUG_WALL_BOUNDS true
+
 #endif

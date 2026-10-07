@@ -9,6 +9,8 @@ static void SetModelShader(Model *model, Shader shader);
 static RenderTexture2D LoadShadowMapRenderTexture(int width, int height);
 static void UnloadShadowMapRenderTexture(RenderTexture2D target);
 
+// NOTE: call SceneRenderer_Init AFTER this function. It copies the ground material, and that
+// material must already have the lighting shader assigned (done at the end of this function).
 bool ShaderSystemInitialize(ShaderSystem *system, Model *wall, Model *ground, const Level *level)
 {
     *system = {};
@@ -24,6 +26,17 @@ bool ShaderSystemInitialize(ShaderSystem *system, Model *wall, Model *ground, co
         ShaderSystemUnload(system);
         return false;
     }
+
+    // Instancing: DrawMeshInstanced feeds per-instance matrices into this vertex attribute.
+    // The GLSL compiler strips unused attributes, so -1 also means the .vs doesn't use it.
+    const int instanceTransformLocation = GetShaderLocationAttrib(system->lighting, "instanceTransform");
+    if (instanceTransformLocation < 0)
+    {
+        TraceLog(LOG_ERROR, "sun_lighting.vs has no (used) 'instanceTransform' attribute");
+        ShaderSystemUnload(system);
+        return false;
+    }
+    system->lighting.locs[SHADER_LOC_MATRIX_MODEL] = instanceTransformLocation;
 
     system->shadowMap = LoadShadowMapRenderTexture(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
     // A depth-only RenderTexture intentionally has no color texture, so
@@ -46,8 +59,8 @@ bool ShaderSystemInitialize(ShaderSystem *system, Model *wall, Model *ground, co
     system->lightCamera.fovy = SHADOW_CAMERA_SIZE;
     system->lightCamera.projection = CAMERA_ORTHOGRAPHIC;
 
+    // Only walls are drawn in the shadow pass now, so the ground keeps no depth shader.
     SetModelShader(wall, system->depth);
-    SetModelShader(ground, system->depth);
 
     Matrix lightView = MatrixIdentity();
     Matrix lightProjection = MatrixIdentity();
@@ -59,7 +72,7 @@ bool ShaderSystemInitialize(ShaderSystem *system, Model *wall, Model *ground, co
     lightView = rlGetMatrixModelview();
     lightProjection = rlGetMatrixProjection();
 
-    DrawShadowCasters(*wall, *ground, level);
+    DrawShadowCasters(*wall, level);
 
     EndMode3D();
     EndTextureMode();
@@ -89,20 +102,20 @@ bool ShaderSystemInitialize(ShaderSystem *system, Model *wall, Model *ground, co
     return true;
 }
 
-void ShaderSystemUpdateShadowMap(ShaderSystem *system, Model *wall, Model *ground, const Level *level)
+// `ground` parameter removed: it no longer casts shadows. (The old version also called
+// DrawShadowCasters with mismatched arguments.)
+void ShaderSystemUpdateShadowMap(ShaderSystem *system, Model *wall, const Level *level)
 {
     SetModelShader(wall, system->depth);
-    SetModelShader(ground, system->depth);
 
     BeginTextureMode(system->shadowMap);
     ClearBackground(WHITE);
     BeginMode3D(system->lightCamera);
-    DrawShadowCasters(*wall, *ground, level);
+    DrawShadowCasters(*wall, level);
     EndMode3D();
     EndTextureMode();
 
     SetModelShader(wall, system->lighting);
-    SetModelShader(ground, system->lighting);
 }
 
 void ShaderSystemBeginLighting(ShaderSystem *system)

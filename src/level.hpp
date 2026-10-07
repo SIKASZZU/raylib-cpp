@@ -15,6 +15,10 @@ struct WallInstance
 struct Level
 {
     std::vector<WallInstance> walls;
+    std::vector<Vector3> groundTiles;
+    std::vector<int> groundIndexByTile;
+    std::vector<int> wallIndexByTile;
+    int mapWidth = 0;
 };
 
 void LevelInitialize(Level *level);
