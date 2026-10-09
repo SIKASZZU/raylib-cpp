@@ -4,7 +4,7 @@
 
 // physics
 #define GRAVITY 32.0f
-#define MAX_SPEED 100.0f
+#define MAX_SPEED 200.0f
 #define CROUCH_SPEED 5.0f
 #define JUMP_FORCE 55.0f
 #define MAX_ACCEL 2000.0f
@@ -26,7 +26,7 @@ constexpr float LIGHT_NEAR = 1.0f;
 constexpr float LIGHT_FAR = 500.0f;
 
 // map
-#define MAP_SIDE_LENGTH 100
+#define MAP_SIDE_LENGTH 325
 #define LEVEL_TILE_SIZE 20.0f
 #define GROUND_MODEL_SCALE 1.5f
 

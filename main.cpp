@@ -49,10 +49,11 @@ int main(void)
 
         physicsAccumulator += delta;
         jumpQueued = jumpQueued || IsKeyPressed(KEY_SPACE);
+        bool jumpHolding = IsKeyDown(KEY_SPACE); // TODO: remove these lines if remove god mode
         while (physicsAccumulator >= PHYSICS_STEP)
         {
             PlayerUpdate(&player, &level, CameraControllerGetYaw(&cameraController),
-                         sideway, forward, jumpQueued, crouching, PHYSICS_STEP);
+                         sideway, forward, jumpHolding, crouching, PHYSICS_STEP);
             jumpQueued = false;
             physicsAccumulator -= PHYSICS_STEP;
         }
