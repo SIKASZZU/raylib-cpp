@@ -28,19 +28,12 @@ constexpr float LIGHT_FAR = 500.0f;
 // map
 #define MAP_SIDE_LENGTH 325
 #define LEVEL_TILE_SIZE 20.0f
-#define GROUND_MODEL_SCALE 1.5f
+#define GROUND_MODEL_SCALE (LEVEL_TILE_SIZE / 12.04f) // 12.04f is model size
 
 #define WALL_HALF_LENGTH (LEVEL_TILE_SIZE * 0.5f)
 #define WALL_HALF_THICKNESS 1.2f // TODO: WRONG
 #define WALL_HEIGHT (LEVEL_TILE_SIZE)
-#define WALL_MODEL_SCALE 1.5f
-
-// Local-space bounds of resources/wall/maze_wall.obj; used to fit the model
-// to the configured collision dimensions.
-#define WALL_MODEL_HALF_LENGTH 6.0f
-#define WALL_MODEL_HALF_THICKNESS 1.37f
-#define WALL_MODEL_MIN_Y (-0.175f)
-#define WALL_MODEL_HEIGHT 14.35f
+#define WALL_MODEL_SCALE (LEVEL_TILE_SIZE / 12.04f) // 12.04f is model size
 
 // shaders
 #define SHADOW_MAP_SIZE 2048
