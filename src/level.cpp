@@ -60,12 +60,26 @@ void LevelInitialize(Level *level)
             const bool wallEast = x + 1 < MAP_SIDE_LENGTH && IsWallTile(terrainMap[get_map_index(x + 1, z)]);
             const bool wallNorth = z > 0 && IsWallTile(terrainMap[get_map_index(x, z - 1)]);
             const bool wallSouth = z + 1 < MAP_SIDE_LENGTH && IsWallTile(terrainMap[get_map_index(x, z + 1)]);
+
             const int horizontalNeighbors = static_cast<int>(wallWest) + static_cast<int>(wallEast);
             const int verticalNeighbors = static_cast<int>(wallNorth) + static_cast<int>(wallSouth);
+
+            if (int(wallWest) + int(wallEast) + int(wallNorth) + int(wallSouth) > 3) {
+                continue;
+            }
+
+            const bool isCorner = horizontalNeighbors == 1 && verticalNeighbors == 1;
+
             wall.rotationDegrees = verticalNeighbors > horizontalNeighbors ? 90.0f : 0.0f;
 
             level->wallIndexByTile[tileIndex] = static_cast<int>(level->walls.size());
             level->walls.push_back(wall);
+
+            if (isCorner)
+            {
+                wall.rotationDegrees += 90.0f;
+                level->walls.push_back(wall);
+            }
         }
     }
 }
