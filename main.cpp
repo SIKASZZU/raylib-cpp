@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "rlgl.h"
+#include "iostream"
 
 #include "src/camera_controller.hpp"
 #include "src/game_config.hpp"
@@ -73,6 +74,7 @@ int main(void)
         DrawRectangleLines(5, 5, 440, 130, BLUE);
 
         Color textColor = RED;
+
         DrawText("Camera controls:", 15, 15, 10, textColor);
         DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, textColor);
         DrawText("- Look around: arrow keys or mouse", 15, 45, 10, textColor);
@@ -82,8 +84,13 @@ int main(void)
                             renderStats.visibleInstances, renderStats.totalInstances,
                             renderStats.totalInstances - renderStats.visibleInstances),
                  15, 90, 10, textColor);
+
         DrawText(TextFormat("- Draw calls: %d", renderStats.drawCalls), 15, 105, 10, textColor);
         DrawText(TextFormat("- Wall count: %d", level.walls.size()), 15, 120, 10, textColor);
+
+        std::cout << "player pos: " << player.position.x << " " << player.position.y << " " << player.position.z << " " << "\n";
+        DrawText(TextFormat("- xyz: %7.2f %7.2f %7.2f", player.position.x, player.position.y, player.position.z), screenWidth - 350, 0, 20, textColor); // player pos
+
         DrawFPS(10, screenHeight - 20); // fps
 
         EndDrawing();
