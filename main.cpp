@@ -1,13 +1,14 @@
-#include "raylib.h"
-#include "raymath.h"
-#include "rlgl.h"
-#include "iostream"
+#include <raylib.h>
+#include <raymath.h>
+#include <rlgl.h>
+#include <iostream>
 
 #include "src/camera_controller.hpp"
 #include "src/game_config.hpp"
 #include "src/level.hpp"
 #include "src/player.hpp"
 #include "src/scene_renderer.hpp"
+#include "src/model_assets.hpp"
 
 int main(void)
 {
@@ -17,8 +18,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib");
     rlSetClipPlanes(LIGHT_NEAR, LIGHT_FAR);
 
-    Model wall = LoadModel("resources/wall/maze_wall.obj");
-    Model ground = LoadModel("resources/ground/maze_ground.obj");
+    ModelAssets models = LoadModelAssets();
 
     Level level = {};
     LevelInitialize(&level);
@@ -67,7 +67,7 @@ int main(void)
         ClearBackground(Color{SKY_R, SKY_G, SKY_B, 255});
 
         BeginMode3D(camera);
-        RenderStats renderStats = DrawLevel(wall, ground, &level, &camera);
+        RenderStats renderStats = DrawLevel(models, &level, &camera);
         EndMode3D();
 
         DrawRectangle(5, 5, 440, 130, Fade(SKYBLUE, 0.5f));
@@ -88,15 +88,14 @@ int main(void)
         DrawText(TextFormat("- Draw calls: %d", renderStats.drawCalls), 15, 105, 10, textColor);
         DrawText(TextFormat("- Wall count: %d", level.walls.size()), 15, 120, 10, textColor);
 
-        std::cout << "player pos: " << player.position.x << " " << player.position.y << " " << player.position.z << " " << "\n";
         DrawText(TextFormat("- xyz: %7.2f %7.2f %7.2f", player.position.x, player.position.y, player.position.z), screenWidth - 350, 0, 20, textColor); // player pos
 
         DrawFPS(10, screenHeight - 20); // fps
 
         EndDrawing();
     }
-    UnloadModel(wall);
-    UnloadModel(ground);
+
+    UnloadModelAssets(models);
     CloseWindow();
     CloseWindow();
 

@@ -1,9 +1,11 @@
-#include "scene_renderer.hpp"
-#include "game_config.hpp" // NEAR_PLANE / LIGHT_FAR live here, don't redefine them
-#include "raymath.h"
-
 #include <math.h>
 #include <algorithm>
+
+#include "scene_renderer.hpp"
+#include "game_config.hpp"
+#include "map.hpp"
+
+#include <raymath.h>
 
 // Camera basis and tangents, computed once per frame instead of once per object.
 struct ViewFrustum
@@ -42,10 +44,13 @@ static bool SphereVisible(const ViewFrustum &f, Vector3 center, float radius)
            v <= depth * f.tanV + radius * f.secV;
 }
 
-RenderStats DrawLevel(Model wall, Model ground, const Level *level, const Camera *camera)
+RenderStats DrawLevel(const ModelAssets &models, const Level *level, const Camera *camera)
 {
     RenderStats stats = {};
     const ViewFrustum f = MakeFrustum(*camera);
+    const Model &ground = models.at(ModelId::Ground);
+    const Model &wall = models.at(ModelId::Wall);
+    const Model &cube = models.at(ModelId::Cube);
 
     // ---- ground: tile based, but only tiles within the far plane are even considered ----
     const float T = LEVEL_TILE_SIZE;
@@ -59,17 +64,26 @@ RenderStats DrawLevel(Model wall, Model ground, const Level *level, const Camera
 
     stats.totalInstances += (2 * MAP_SIDE_LENGTH) * (2 * MAP_SIDE_LENGTH);
 
-    for (int z = zMin; z <= zMax; z++)
+    for (int z = 0; z < MAP_SIDE_LENGTH; z++)
     {
-        for (int x = xMin; x <= xMax; x++)
+        for (int x = 0; x < MAP_SIDE_LENGTH; x++)
         {
             const Vector3 position = {x * T, 0.0f, z * T};
             if (!SphereVisible(f, Vector3{position.x, -0.5f * groundScale, position.z}, groundRadius))
                 continue;
 
-            DrawModel(ground, position, groundScale, WHITE);
+            DrawModel(models.at(ModelId::Ground), position, groundScale, WHITE);
+
             stats.visibleInstances++;
             stats.drawCalls++;
+
+            const int tile = terrainMap[get_map_index(x, z)];
+            if (tile == Map::MAZE_NS_DOOR || tile == Map::MAZE_WE_DOOR)
+            {
+                DrawModel(models.at(ModelId::Cube), position, 1.0f, PURPLE);
+                stats.visibleInstances++;
+                stats.drawCalls++;
+            }
         }
     }
 

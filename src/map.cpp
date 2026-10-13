@@ -55,8 +55,9 @@ namespace MapGenerator
         voidPossibleLocations.clear();
 
         generate_ground();
-        generate_mazes();
         generate_glade(terrainMap);
+        // generate_mazes();
+        // generate_glade(terrainMap);
         // generate_cliffs();
         // generate_tunnels();
     }
@@ -346,27 +347,30 @@ namespace MapGenerator
                 int dy = static_cast<int>(std::abs(y - (MAP_SIDE_LENGTH * 0.5)));
 
                 // Glade (square) and Ingrown walls around glade
-                int thicknessGladeWall = 1;
+                int thicknessGladeWall = 3;
                 if (dx <= gladeRadius + thicknessGladeWall && dy <= gladeRadius + thicknessGladeWall)
                 {
 
                     // inner glade
-                    terrainMap[get_map_index(x, y)] = Map::GROUND_CUBE;
+                    terrainMap[get_map_index(x, y)] = Map::INGROWN_WALL_CUBE;
 
                     // walls outside of glade radius
                     if (dx == gladeRadius + 1 || dy == gladeRadius + 1)
                     {
-                        if (x != (MAP_SIDE_LENGTH * 0.5) && y != (MAP_SIDE_LENGTH * 0.5))
-                        {
-                            terrainMap[get_map_index(x, y)] = Map::INGROWN_WALL_CUBE;
-                        }
+                        // if (x != (MAP_SIDE_LENGTH * 0.5) && y != (MAP_SIDE_LENGTH * 0.5))
+                        // {
+                        //     // std::cout << "here 3" << '\n';
+                        //     terrainMap[get_map_index(x, y)] = Map::INGROWN_WALL_CUBE;
+                        // }
 
                         if (x == (MAP_SIDE_LENGTH * 0.5) || x - 1 == (MAP_SIDE_LENGTH * 0.5))
                         {
+                            std::cout << "here 1" << '\n';
                             terrainMap[get_map_index(x, y)] = Map::MAZE_WE_DOOR;
                         }
                         if (y == (MAP_SIDE_LENGTH * 0.5) || y - 1 == (MAP_SIDE_LENGTH * 0.5))
                         {
+                            std::cout << "here 2" << '\n';
                             terrainMap[get_map_index(x, y)] = Map::MAZE_NS_DOOR;
                         }
                     }

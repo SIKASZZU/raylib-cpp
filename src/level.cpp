@@ -15,7 +15,6 @@ static bool IsWallTile(int tile)
     case Map::SECTOR_2_WALL_VAL:
     case Map::SECTOR_3_WALL_VAL:
     case Map::TUNNEL_WALL:
-    case Map::TREE:
     case Map::TREE_TRUNK:
         return true;
     default:
@@ -50,6 +49,8 @@ void LevelInitialize(Level *level)
             level->groundIndexByTile[tileIndex] = static_cast<int>(level->groundTiles.size());
             level->groundTiles.push_back({worldX, 0.0f, worldZ});
 
+            // std::cout << "Tile: " << enumMapToString(tile) << '\n';
+
             if (!IsWallTile(tile))
                 continue;
 
@@ -64,7 +65,8 @@ void LevelInitialize(Level *level)
             const int horizontalNeighbors = static_cast<int>(wallWest) + static_cast<int>(wallEast);
             const int verticalNeighbors = static_cast<int>(wallNorth) + static_cast<int>(wallSouth);
 
-            if (int(wallWest) + int(wallEast) + int(wallNorth) + int(wallSouth) > 3) {
+            if (int(wallWest) + int(wallEast) + int(wallNorth) + int(wallSouth) > 3)
+            {
                 continue;
             }
 

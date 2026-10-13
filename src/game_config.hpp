@@ -26,7 +26,7 @@ constexpr float LIGHT_NEAR = 1.0f;
 constexpr float LIGHT_FAR = 500.0f;
 
 // map
-#define MAP_SIDE_LENGTH 325
+#define MAP_SIDE_LENGTH 50
 #define LEVEL_TILE_SIZE 20.0f
 #define GROUND_MODEL_SCALE (LEVEL_TILE_SIZE / 12.04f) // 12.04f is model size
 

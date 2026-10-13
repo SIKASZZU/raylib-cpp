@@ -1,6 +1,7 @@
 #pragma once
 #include "raylib.h"
 #include "level.hpp" // wherever Level / WallInstance live
+#include "model_assets.hpp"
 
 struct RenderStats
 {
@@ -9,4 +10,4 @@ struct RenderStats
     int drawCalls;
 };
 
-RenderStats DrawLevel(Model wall, Model ground, const Level *level, const Camera *camera);
+RenderStats DrawLevel(const ModelAssets &models, const Level *level, const Camera *camera);
