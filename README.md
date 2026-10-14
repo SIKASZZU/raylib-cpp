@@ -13,11 +13,17 @@ g++ -std=c++20 main.cpp src/level.cpp src/player.cpp src/camera_controller.cpp s
 
 
 ## Run
-
 Run from the repository root so model and shader resource paths resolve:
 
 ```sh
 ./main
+```
+
+## Debug run
+
+If program closes without specific code or line error run:
+```sh
+gdb -batch -ex run -ex bt ./main
 ```
 
 ## Source layout

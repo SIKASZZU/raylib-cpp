@@ -5,9 +5,9 @@
 #include <utility>
 #include <set>
 #include <random>
-#include "raymath.h"
 
 #include "map.hpp"
+#include <raymath.h>
 #include "common.hpp"
 #include "maze.hpp"
 #include "game_config.hpp"
@@ -28,8 +28,8 @@ namespace MapGenerator
     std::set<std::pair<int, int>> voidPossibleLocations;
     int gladeRadius = (MAP_SIDE_LENGTH / 10) >= 10 ? 10 : MAP_SIDE_LENGTH / 10; // if MAP_SIDE_LENGTH / 10 > 10; hard cap to 10.
 
-    int mazeSize = MAP_SIDE_LENGTH / 2 - 4;
-    int halfMapSize = MAP_SIDE_LENGTH / 2;
+    int mazeSize = MAP_SIDE_LENGTH_HALF - 4;
+    int halfMapSize = MAP_SIDE_LENGTH_HALF;
     int maxMazeSize = 130;
 
     int mazeInnerRadius = gladeRadius + 1;
@@ -47,31 +47,33 @@ namespace MapGenerator
 
     void init()
     {
-        terrainMap.assign(MAP_SIDE_LENGTH * MAP_SIDE_LENGTH, Map::EMPTY);
+        terrainMap.assign(get_map_size(), Map::EMPTY);
         // diagonalGrids.clear();
         getS3PatchLocations().clear();
         sector3Cutouts.clear();
         // SECTOR_3_REMOVE_EXTRA_THICKNESS.clear();
         voidPossibleLocations.clear();
 
-        generate_ground();
-        generate_glade(terrainMap);
+        // generate_ground();
         // generate_mazes();
-        // generate_glade(terrainMap);
+        generate_glade(terrainMap);
         // generate_cliffs();
         // generate_tunnels();
     }
 
     void generate_ground()
     {
+        MapBoundsVec4 mapBounds = get_map_limits();
         float maxDistance = std::sqrt((MAP_SIDE_LENGTH * 0.5) * (MAP_SIDE_LENGTH * 0.5) + (MAP_SIDE_LENGTH * 0.5) * (MAP_SIDE_LENGTH * 0.5));
-        for (int y = 0; y < MAP_SIDE_LENGTH; y++)
+        for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)
         {
-            for (int x = 0; x < MAP_SIDE_LENGTH; x++)
+            for (int x = mapBounds.xMin; x < mapBounds.xMax; x++)
             {
+                // TODO: forgive me father
+                int y = z;
 
-                int dx = static_cast<int>(std::abs(x - (MAP_SIDE_LENGTH * 0.5)));
-                int dy = static_cast<int>(std::abs(y - (MAP_SIDE_LENGTH * 0.5)));
+                int dx = std::abs(x);
+                int dy = std::abs(y);
 
                 float distance_sq = dx * dx + dy * dy;
                 int distance = std::sqrt(distance_sq);
@@ -164,7 +166,8 @@ namespace MapGenerator
                 }
 
                 // walls around the terrainMap, map border.
-                if (y == 0 || x == 0 || y == (MAP_SIDE_LENGTH - 1) || x == (MAP_SIDE_LENGTH - 1))
+                if (y == mapBounds.zMin || x == mapBounds.xMin ||
+                    y + 1 == mapBounds.zMax || x + 1 == mapBounds.xMax)
                 {
                     terrainMap[get_map_index(x, y)] = Map::INGROWN_WALL_CUBE;
                 }
@@ -186,9 +189,9 @@ namespace MapGenerator
 
         auto find_start_sectors = [&]() -> bool
         {
-            for (int i = 0; i < MAP_SIDE_LENGTH; i++)
+            for (int i = -MAP_SIDE_LENGTH; i < MAP_SIDE_LENGTH; i++)
             {
-                for (int j = 0; j < MAP_SIDE_LENGTH; j++)
+                for (int j = -MAP_SIDE_LENGTH; j < MAP_SIDE_LENGTH; j++)
                 {
                     if (terrainMap[get_map_index(i, j)] == Map::SECTOR_1_WALL_VAL && sector_1 == false)
                     {
@@ -279,9 +282,9 @@ namespace MapGenerator
 
     void generate_s1_clearspots()
     {
-        for (int y = 0; y < MAP_SIDE_LENGTH; y++)
+        for (int y = -MAP_SIDE_LENGTH; y < MAP_SIDE_LENGTH; y++)
         {
-            for (int x = 0; x < MAP_SIDE_LENGTH; x++)
+            for (int x = -MAP_SIDE_LENGTH; x < MAP_SIDE_LENGTH; x++)
             {
 
                 int dx = static_cast<int>(std::abs(x - (MAP_SIDE_LENGTH * 0.5)));
@@ -338,39 +341,36 @@ namespace MapGenerator
 
     void generate_glade(std::vector<int> &terrainMap)
     {
-
-        for (int y = 0; y < MAP_SIDE_LENGTH; y++)
+        MapBoundsVec4 mapBounds = get_map_limits();
+        for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)
         {
-            for (int x = 0; x < MAP_SIDE_LENGTH; x++)
+            for (int x = mapBounds.xMin; x < mapBounds.xMax; x++)
             {
-                int dx = static_cast<int>(std::abs(x - (MAP_SIDE_LENGTH * 0.5)));
-                int dy = static_cast<int>(std::abs(y - (MAP_SIDE_LENGTH * 0.5)));
+                int y = z;
+                int dx = std::abs(x);
+                int dy = std::abs(y);
 
                 // Glade (square) and Ingrown walls around glade
-                int thicknessGladeWall = 3;
+                int thicknessGladeWall = 1;
                 if (dx <= gladeRadius + thicknessGladeWall && dy <= gladeRadius + thicknessGladeWall)
                 {
-
                     // inner glade
-                    terrainMap[get_map_index(x, y)] = Map::INGROWN_WALL_CUBE;
+                    terrainMap[get_map_index(x, y)] = Map::GROUND_CUBE;
 
                     // walls outside of glade radius
-                    if (dx == gladeRadius + 1 || dy == gladeRadius + 1)
+                    if (dx == gladeRadius + 1 || dy == gladeRadius + 1) // +1 because it does not calculate corners seperately, good ig
                     {
-                        // if (x != (MAP_SIDE_LENGTH * 0.5) && y != (MAP_SIDE_LENGTH * 0.5))
-                        // {
-                        //     // std::cout << "here 3" << '\n';
-                        //     terrainMap[get_map_index(x, y)] = Map::INGROWN_WALL_CUBE;
-                        // }
-
-                        if (x == (MAP_SIDE_LENGTH * 0.5) || x - 1 == (MAP_SIDE_LENGTH * 0.5))
+                        if (x != 0 && y != 0)
                         {
-                            std::cout << "here 1" << '\n';
+                            terrainMap[get_map_index(x, y)] = Map::INGROWN_WALL_CUBE;
+                        }
+
+                        if (x == 0 || x - 1 == 0)
+                        {
                             terrainMap[get_map_index(x, y)] = Map::MAZE_WE_DOOR;
                         }
-                        if (y == (MAP_SIDE_LENGTH * 0.5) || y - 1 == (MAP_SIDE_LENGTH * 0.5))
+                        if (y == 0 || y - 1 == 0)
                         {
-                            std::cout << "here 2" << '\n';
                             terrainMap[get_map_index(x, y)] = Map::MAZE_NS_DOOR;
                         }
                     }
@@ -412,9 +412,9 @@ namespace MapGenerator
         const int wallEnum = Map::INGROWN_WALL_CUBE;
         const int pathEnum = Map::SECTOR_3_PATHWAY;
 
-        for (int y = 0; y < MAP_SIDE_LENGTH; y++)
+        for (int y = -MAP_SIDE_LENGTH; y < MAP_SIDE_LENGTH; y++)
         {
-            for (int x = 0; x < MAP_SIDE_LENGTH; x++)
+            for (int x = -MAP_SIDE_LENGTH; x < MAP_SIDE_LENGTH; x++)
             {
                 int dx = std::abs(x - (MAP_SIDE_LENGTH * 0.5));
                 int dy = std::abs(y - (MAP_SIDE_LENGTH * 0.5));
@@ -463,9 +463,9 @@ namespace MapGenerator
         }
 
         // doors at mazeOuterRadius
-        for (int y = 0; y < MAP_SIDE_LENGTH; y++)
+        for (int y = -MAP_SIDE_LENGTH; y < MAP_SIDE_LENGTH; y++)
         {
-            for (int x = 0; x < MAP_SIDE_LENGTH; x++)
+            for (int x = -MAP_SIDE_LENGTH; x < MAP_SIDE_LENGTH; x++)
             {
                 int innerMax = 2 * mazeOuterRadius + ((MAP_SIDE_LENGTH - (2 * mazeOuterRadius)) / 2);
                 int innerMin = ((MAP_SIDE_LENGTH - (2 * mazeOuterRadius)) / 2);
@@ -497,9 +497,9 @@ namespace MapGenerator
         const int innerMin = tunnelWidth - 1;
         const int innerMax = MAP_SIDE_LENGTH - tunnelWidth;
 
-        for (int y = 0; y < MAP_SIDE_LENGTH; y++)
+        for (int y = -MAP_SIDE_LENGTH; y < MAP_SIDE_LENGTH; y++)
         {
-            for (int x = 0; x < MAP_SIDE_LENGTH; x++)
+            for (int x = -MAP_SIDE_LENGTH; x < MAP_SIDE_LENGTH; x++)
             {
 
                 bool inTunnel = x < tunnelWidth || x >= MAP_SIDE_LENGTH - tunnelWidth || y < tunnelWidth || y >= MAP_SIDE_LENGTH - tunnelWidth;

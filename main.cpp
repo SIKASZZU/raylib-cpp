@@ -86,7 +86,7 @@ int main(void)
                  15, 90, 10, textColor);
 
         DrawText(TextFormat("- Draw calls: %d", renderStats.drawCalls), 15, 105, 10, textColor);
-        DrawText(TextFormat("- Wall count: %d", level.walls.size()), 15, 120, 10, textColor);
+        // DrawText(TextFormat("- Wall count: %d", level.walls.size()), 15, 120, 10, textColor);
 
         DrawText(TextFormat("- xyz: %7.2f %7.2f %7.2f", player.position.x, player.position.y, player.position.z), screenWidth - 350, 0, 20, textColor); // player pos
 

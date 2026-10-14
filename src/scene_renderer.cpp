@@ -53,37 +53,43 @@ RenderStats DrawLevel(const ModelAssets &models, const Level *level, const Camer
     const Model &cube = models.at(ModelId::Cube);
 
     // ---- ground: tile based, but only tiles within the far plane are even considered ----
-    const float T = LEVEL_TILE_SIZE;
     const float groundScale = GROUND_MODEL_SCALE;
-    const float groundRadius = T * 0.7072f; // half of the tile diagonal
 
-    const int xMin = std::max(-MAP_SIDE_LENGTH, (int)floorf((camera->position.x - LIGHT_FAR) / T));
-    const int xMax = std::min(MAP_SIDE_LENGTH - 1, (int)ceilf((camera->position.x + LIGHT_FAR) / T));
-    const int zMin = std::max(-MAP_SIDE_LENGTH, (int)floorf((camera->position.z - LIGHT_FAR) / T));
-    const int zMax = std::min(MAP_SIDE_LENGTH - 1, (int)ceilf((camera->position.z + LIGHT_FAR) / T));
+    const float T = LEVEL_TILE_SIZE;
+    const float groundRadius = LEVEL_TILE_SIZE * 0.7071f; // kui visual artifact renderimises, siis asenda 0.7072-ga. // half of the tile diagonal
+
+    MapBoundsVec4 mapBounds = get_map_limits_with_camera(camera);
 
     stats.totalInstances += (2 * MAP_SIDE_LENGTH) * (2 * MAP_SIDE_LENGTH);
 
-    for (int z = 0; z < MAP_SIDE_LENGTH; z++)
+    for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)
     {
-        for (int x = 0; x < MAP_SIDE_LENGTH; x++)
+        for (int x = mapBounds.xMin; x < mapBounds.xMax; x++)
         {
+            const int tile = terrainMap[get_map_index(x, z)];
+            if (tile != Map::GROUND_CUBE && tile != MAZE_WE_DOOR && tile != MAZE_NS_DOOR)
+            {
+                continue;
+            }
+
             const Vector3 position = {x * T, 0.0f, z * T};
+
+            // TODO: test n/2 instead of a*sqrt(2)/2
             if (!SphereVisible(f, Vector3{position.x, -0.5f * groundScale, position.z}, groundRadius))
                 continue;
 
-            DrawModel(models.at(ModelId::Ground), position, groundScale, WHITE);
-
-            stats.visibleInstances++;
-            stats.drawCalls++;
-
-            const int tile = terrainMap[get_map_index(x, z)];
-            if (tile == Map::MAZE_NS_DOOR || tile == Map::MAZE_WE_DOOR)
+            if (tile == Map::GROUND_CUBE)
+            {
+                DrawModel(models.at(ModelId::Ground), position, groundScale, WHITE);
+            }
+            else if (tile == Map::MAZE_NS_DOOR || tile == Map::MAZE_WE_DOOR)
             {
                 DrawModel(models.at(ModelId::Cube), position, 1.0f, PURPLE);
-                stats.visibleInstances++;
-                stats.drawCalls++;
             }
+
+            // collect human data and sell it
+            stats.visibleInstances++;
+            stats.drawCalls++;
         }
     }
 

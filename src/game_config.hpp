@@ -26,12 +26,17 @@ constexpr float LIGHT_NEAR = 1.0f;
 constexpr float LIGHT_FAR = 500.0f;
 
 // map
-#define MAP_SIDE_LENGTH 50
+#define MAP_SIDE_LENGTH 100
+#define MAP_SIDE_LENGTH_HALF (int(MAP_SIDE_LENGTH * 0.5f))
 #define LEVEL_TILE_SIZE 20.0f
+#define LEVEL_TILE_DIAGONAL (LEVEL_TILE_SIZE * 0.7072f)
+
 #define GROUND_MODEL_SCALE (LEVEL_TILE_SIZE / 12.04f) // 12.04f is model size
 
 #define WALL_HALF_LENGTH (LEVEL_TILE_SIZE * 0.5f)
-#define WALL_HALF_THICKNESS 1.2f // TODO: WRONG
+
+#define WALL_HALF_THICKNESS 1.2f // TODO: WRONG XD
+
 #define WALL_HEIGHT (LEVEL_TILE_SIZE)
 #define WALL_MODEL_SCALE (LEVEL_TILE_SIZE / 12.04f) // 12.04f is model size
 

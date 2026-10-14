@@ -5,7 +5,7 @@
 
 struct RenderStats
 {
-    int totalInstances;
+    int totalInstances; // how you know that this is truth, ps you dont
     int visibleInstances;
     int drawCalls;
 };
