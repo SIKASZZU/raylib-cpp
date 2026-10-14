@@ -44,70 +44,82 @@ static bool SphereVisible(const ViewFrustum &f, Vector3 center, float radius)
            v <= depth * f.tanV + radius * f.secV;
 }
 
-RenderStats DrawLevel(const ModelAssets &models, const Level *level, const Camera *camera)
+static RenderSnapshot CollectVisibleItems(const Level *level, const Camera *camera)
 {
-    RenderStats stats = {};
+    RenderSnapshot snapshot;
     const ViewFrustum f = MakeFrustum(*camera);
-    const Model &ground = models.at(ModelId::Ground);
-    const Model &wall = models.at(ModelId::Wall);
-    const Model &cube = models.at(ModelId::Cube);
-
-    // ---- ground: tile based, but only tiles within the far plane are even considered ----
-    const float groundScale = GROUND_MODEL_SCALE;
-
-    const float T = LEVEL_TILE_SIZE;
-    const float groundRadius = LEVEL_TILE_SIZE * 0.7071f; // kui visual artifact renderimises, siis asenda 0.7072-ga. // half of the tile diagonal
-
-    MapBoundsVec4 mapBounds = get_map_limits_with_camera(camera);
-
-    stats.totalInstances += (2 * MAP_SIDE_LENGTH) * (2 * MAP_SIDE_LENGTH);
+    const float groundRadius = LEVEL_TILE_SIZE * 0.7071f;
+    const MapBoundsVec4 mapBounds = get_map_limits_with_camera(camera);
 
     for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)
     {
         for (int x = mapBounds.xMin; x < mapBounds.xMax; x++)
         {
             const int tile = terrainMap[get_map_index(x, z)];
-            if (tile != Map::GROUND_CUBE && tile != MAZE_WE_DOOR && tile != MAZE_NS_DOOR)
-            {
-                continue;
-            }
-
-            const Vector3 position = {x * T, 0.0f, z * T};
-
-            // TODO: test n/2 instead of a*sqrt(2)/2
-            if (!SphereVisible(f, Vector3{position.x, -0.5f * groundScale, position.z}, groundRadius))
+            if (tile != Map::GROUND_CUBE && tile != Map::MAZE_WE_DOOR && tile != Map::MAZE_NS_DOOR)
                 continue;
 
-            if (tile == Map::GROUND_CUBE)
-            {
-                DrawModel(models.at(ModelId::Ground), position, groundScale, WHITE);
-            }
-            else if (tile == Map::MAZE_NS_DOOR || tile == Map::MAZE_WE_DOOR)
-            {
-                DrawModel(models.at(ModelId::Cube), position, 1.0f, PURPLE);
-            }
+            const Vector3 position = {x * LEVEL_TILE_SIZE, 0.0f, z * LEVEL_TILE_SIZE};
+            if (!SphereVisible(f, Vector3{position.x, -0.5f * GROUND_MODEL_SCALE, position.z}, groundRadius))
+                continue;
 
-            // collect human data and sell it
-            stats.visibleInstances++;
-            stats.drawCalls++;
+            const RenderItemType type = tile == Map::GROUND_CUBE ? RenderItemType::Ground : RenderItemType::Door;
+            snapshot.items.push_back({type, position, 0.0f});
         }
     }
 
-    // ---- walls: plain DrawModelEx for everything inside the frustum ----
-    for (const WallInstance &w : level->walls)
+    const float halfLength = WALL_HALF_LENGTH;
+    const float halfThickness = WALL_HALF_THICKNESS;
+    const float height = WALL_HEIGHT;
+    const float wallRadius = sqrtf(halfLength * halfLength + halfThickness * halfThickness + height * height * 0.25f);
+
+    for (const WallInstance &wall : level->walls)
     {
-        stats.totalInstances++;
-        const float halfLength = WALL_HALF_LENGTH;
-        const float halfThickness = WALL_HALF_THICKNESS;
-        const float height = WALL_HEIGHT;
-        const float radius = sqrtf(halfLength * halfLength + halfThickness * halfThickness + height * height * 0.25f);
-        const Vector3 center = {w.position.x, w.position.y + height * 0.5f, w.position.z};
+        const Vector3 center = {wall.position.x, wall.position.y + height * 0.5f, wall.position.z};
+        if (SphereVisible(f, center, wallRadius))
+            snapshot.items.push_back({RenderItemType::Wall, wall.position, wall.rotationDegrees});
+    }
 
-        if (!SphereVisible(f, center, radius))
-            continue;
+    return snapshot;
+}
 
-        DrawModelEx(wall, w.position, Vector3{0.0f, 1.0f, 0.0f}, w.rotationDegrees,
+RenderSnapshot CaptureRenderSnapshot(const Level *level, const Camera *camera)
+{
+    return CollectVisibleItems(level, camera);
+}
+
+static void DrawRenderItem(const ModelAssets &models, const RenderItem &item)
+{
+    switch (item.type)
+    {
+    case RenderItemType::Ground:
+        DrawModel(models.at(ModelId::Ground), item.position, GROUND_MODEL_SCALE, WHITE);
+        break;
+    case RenderItemType::Door:
+        DrawModel(models.at(ModelId::Cube), item.position, 1.0f, PURPLE);
+        break;
+    case RenderItemType::Wall:
+        DrawModelEx(models.at(ModelId::Wall), item.position, Vector3{0.0f, 1.0f, 0.0f}, item.rotationDegrees,
                     Vector3{WALL_MODEL_SCALE, WALL_MODEL_SCALE, WALL_MODEL_SCALE}, WHITE);
+        break;
+    }
+}
+
+RenderStats DrawLevel(const ModelAssets &models, const Level *level, const Camera *camera,
+                      const RenderSnapshot *renderSnapshot)
+{
+    RenderStats stats = {};
+    RenderSnapshot currentView;
+    if (renderSnapshot == nullptr)
+    {
+        currentView = CollectVisibleItems(level, camera);
+        renderSnapshot = &currentView;
+    }
+
+    stats.totalInstances = 4 * MAP_SIDE_LENGTH * MAP_SIDE_LENGTH + static_cast<int>(level->walls.size());
+    for (const RenderItem &item : renderSnapshot->items)
+    {
+        DrawRenderItem(models, item);
         stats.visibleInstances++;
         stats.drawCalls++;
     }

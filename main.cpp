@@ -36,11 +36,14 @@ int main(void)
     bool jumpQueued = false;
     int showShadowMode = 0;
 
+    bool renderStop = false;
+    RenderSnapshot renderSnapshot;
+    RenderStats renderStats;
+
     while (!WindowShouldClose())
     {
         if (IsKeyPressed(KEY_F3))
             showShadowMode = (showShadowMode + 1) % 3;
-
         float delta = GetFrameTime();
         CameraControllerApplyMouse(&cameraController, GetMouseDelta());
 
@@ -63,33 +66,47 @@ int main(void)
                                sideway, forward, crouching, delta);
         Camera camera = CameraControllerGetCamera(&cameraController);
 
+        if (IsKeyPressed(KEY_F4))
+        {
+            renderStop = !renderStop;
+            if (renderStop)
+                renderSnapshot = CaptureRenderSnapshot(&level, &camera);
+            else
+                renderSnapshot.items.clear();
+        }
+
+        // DRAWING
+
         BeginDrawing();
+
         ClearBackground(Color{SKY_R, SKY_G, SKY_B, 255});
 
         BeginMode3D(camera);
-        RenderStats renderStats = DrawLevel(models, &level, &camera);
+        renderStats = DrawLevel(models, &level, &camera, renderStop ? &renderSnapshot : nullptr);
         EndMode3D();
 
-        DrawRectangle(5, 5, 440, 130, Fade(SKYBLUE, 0.5f));
-        DrawRectangleLines(5, 5, 440, 130, BLUE);
+        Color textColor = GREEN;
 
-        Color textColor = RED;
+        // ON-SCREEN DEBUG TEXT
 
+        // TOP-LEFT
         DrawText("Camera controls:", 15, 15, 10, textColor);
         DrawText("- Move keys: W, A, S, D, Space, Left-Ctrl", 15, 30, 10, textColor);
         DrawText("- Look around: arrow keys or mouse", 15, 45, 10, textColor);
         DrawText(TextFormat("- Velocity Len: (%06.3f)", PlayerGetHorizontalSpeed(&player)), 15, 60, 10, textColor);
-        DrawText(TextFormat("- Shadow debug (F3): %d", showShadowMode), 15, 75, 10, BLACK);
+        DrawText(TextFormat("- Shadow debug (F3): %d", showShadowMode), 15, 75, 10, textColor);
+        DrawText(TextFormat("- Shadow debug (F3): %d", showShadowMode), 15, 90, 10, textColor);
+        DrawText(TextFormat("- Draw calls: %d", renderStats.drawCalls), 15, 105, 10, textColor);
+        DrawText(TextFormat("- Wall count: %d", level.walls.size()), 15, 120, 10, textColor);
         DrawText(TextFormat("- In-frustum instances: %d / %d (%d culled)",
                             renderStats.visibleInstances, renderStats.totalInstances,
                             renderStats.totalInstances - renderStats.visibleInstances),
-                 15, 90, 10, textColor);
+                 15, 135, 10, textColor);
 
-        DrawText(TextFormat("- Draw calls: %d", renderStats.drawCalls), 15, 105, 10, textColor);
-        // DrawText(TextFormat("- Wall count: %d", level.walls.size()), 15, 120, 10, textColor);
-
+        // ON-SCREEN TOP-RIGHT
         DrawText(TextFormat("- xyz: %7.2f %7.2f %7.2f", player.position.x, player.position.y, player.position.z), screenWidth - 350, 0, 20, textColor); // player pos
 
+        // ON-SCREEN BOTTOM-LEFT
         DrawFPS(10, screenHeight - 20); // fps
 
         EndDrawing();
