@@ -23,7 +23,7 @@
 // rendering
 #define CHUNK_SIZE 32.0f
 constexpr float LIGHT_NEAR = 1.0f;
-constexpr float LIGHT_FAR = 500.0f;
+constexpr float LIGHT_FAR = 2500.0f;
 
 // map
 #define MAP_SIDE_LENGTH 100

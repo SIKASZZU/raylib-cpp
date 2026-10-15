@@ -54,7 +54,7 @@ namespace MapGenerator
         // SECTOR_3_REMOVE_EXTRA_THICKNESS.clear();
         voidPossibleLocations.clear();
 
-        // generate_ground();
+        generate_ground();
         // generate_mazes();
         generate_glade(terrainMap);
         // generate_cliffs();
