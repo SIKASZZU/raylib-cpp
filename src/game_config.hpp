@@ -23,10 +23,10 @@
 // rendering
 #define CHUNK_SIZE 32.0f
 constexpr float LIGHT_NEAR = 1.0f;
-constexpr float LIGHT_FAR = 2500.0f;
+constexpr float LIGHT_FAR = 1500.0f;
 
 // map
-#define MAP_SIDE_LENGTH 100
+#define MAP_SIDE_LENGTH 325
 #define MAP_SIDE_LENGTH_HALF (int(MAP_SIDE_LENGTH * 0.5f))
 #define LEVEL_TILE_SIZE 20.0f
 #define LEVEL_TILE_DIAGONAL (LEVEL_TILE_SIZE * 0.7072f)

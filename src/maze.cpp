@@ -63,6 +63,7 @@ namespace Maze
         }
 
         shuffle_directions(directions);
+        const MapBoundsVec4 mapBounds = get_map_limits();
 
         for (const auto &dir : directions)
         {
@@ -70,7 +71,8 @@ namespace Maze
             int ny = start_row + dir.second;
 
             // Bounds check BEFORE map access to avoid out-of-bounds read.
-            if (nx <= 0 || ny <= 0 || nx >= MAP_SIDE_LENGTH - 1 || ny >= MAP_SIDE_LENGTH - 1)
+            if (nx < mapBounds.xMin + 1 || ny < mapBounds.zMin + 1 ||
+                nx >= mapBounds.xMax - 1 || ny >= mapBounds.zMax - 1)
                 continue;
 
             if (terrainMap[get_map_index(ny, nx)] != allowed_number)
@@ -121,7 +123,8 @@ namespace Maze
                 {
                     int cy = start_row + unit_y * step;
                     int cx = start_col + unit_x * step;
-                    if (cx <= 0 || cy <= 0 || cx >= MAP_SIDE_LENGTH - 1 || cy >= MAP_SIDE_LENGTH - 1)
+                    if (cx < mapBounds.xMin + 1 || cy < mapBounds.zMin + 1 ||
+                        cx >= mapBounds.xMax - 1 || cy >= mapBounds.zMax - 1)
                         break;
 
                     // FIX: was `return` — that killed the entire recursive call,
@@ -162,6 +165,7 @@ namespace Maze
     {
 
         const float TWOPI = 2.0f * 3.14159265f;
+        const MapBoundsVec4 mapBounds = get_map_limits();
 
         for (int i = 0; i < numExits; ++i)
         {
@@ -186,24 +190,25 @@ namespace Maze
                 // Carve the full width at this depth
                 for (int t = -halfW; t <= halfW; ++t)
                 {
-                    int x = (MAP_SIDE_LENGTH * 0.5) + static_cast<int>(std::round(r * rdx + t * tdx));
-                    int y = (MAP_SIDE_LENGTH * 0.5) + static_cast<int>(std::round(r * rdy + t * tdy));
+                    int x = halfMAP_SIDE_LENGTH + static_cast<int>(std::round(r * rdx + t * tdx));
+                    int y = halfMAP_SIDE_LENGTH + static_cast<int>(std::round(r * rdy + t * tdy));
 
                     if (doorsInMiddle && r == ringRadius)
                     {
                         // terrainMap[get_map_index(x, y)] = Map::BLUE_CUBE;
-                        if (x == (MAP_SIDE_LENGTH * 0.5) || x - 1 == (MAP_SIDE_LENGTH * 0.5))
+                        if (x == halfMAP_SIDE_LENGTH || x - 1 == halfMAP_SIDE_LENGTH)
                         {
                             terrainMap[get_map_index(x, y)] = Map::MAZE_WE_DOOR;
                         }
-                        if (y == (MAP_SIDE_LENGTH * 0.5) || y - 1 == (MAP_SIDE_LENGTH * 0.5))
+                        if (y == halfMAP_SIDE_LENGTH || y - 1 == halfMAP_SIDE_LENGTH)
                         {
                             terrainMap[get_map_index(x, y)] = Map::MAZE_NS_DOOR;
                         }
                         continue;
                     }
 
-                    if (x > 0 && x < MAP_SIDE_LENGTH - 1 && y > 0 && y < MAP_SIDE_LENGTH - 1)
+                    if (x >= mapBounds.xMin && x < mapBounds.xMax &&
+                        y >= mapBounds.zMin && y < mapBounds.zMax)
                     {
                         terrainMap[get_map_index(x, y)] = tile;
                     }

@@ -895,7 +895,7 @@ namespace MapGenerator
     void generate_ground();
     void generate_mazes();
     void generate_s1_clearspots();
-    void generate_glade(std::vector<int> &textureMap);
+    void generate_glade();
     void generate_decorations();
     void generate_voids();
     void generate_cliffs();

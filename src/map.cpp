@@ -55,8 +55,8 @@ namespace MapGenerator
         voidPossibleLocations.clear();
 
         generate_ground();
-        // generate_mazes();
-        generate_glade(terrainMap);
+        generate_mazes();
+        generate_glade();
         // generate_cliffs();
         // generate_tunnels();
     }
@@ -64,13 +64,15 @@ namespace MapGenerator
     void generate_ground()
     {
         MapBoundsVec4 mapBounds = get_map_limits();
-        float maxDistance = std::sqrt((MAP_SIDE_LENGTH * 0.5) * (MAP_SIDE_LENGTH * 0.5) + (MAP_SIDE_LENGTH * 0.5) * (MAP_SIDE_LENGTH * 0.5));
+        float maxDistance = std::sqrt((MAP_SIDE_LENGTH_HALF) * (MAP_SIDE_LENGTH_HALF) + (MAP_SIDE_LENGTH_HALF) * (MAP_SIDE_LENGTH_HALF));
         for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)
         {
             for (int x = mapBounds.xMin; x < mapBounds.xMax; x++)
             {
                 // TODO: forgive me father
                 int y = z;
+
+                terrainMap[get_map_index(x, y)] = Map::GROUND_CUBE;
 
                 int dx = std::abs(x);
                 int dy = std::abs(y);
@@ -105,6 +107,7 @@ namespace MapGenerator
                 {
                     terrainMap[get_map_index(x, y)] = Map::SECTOR_1_PATHWAY;
                 }
+
                 int interlapBuffer = 3;
                 if (distance >= mazeInnerRadius && distance <= mazeSecondSector - interlapBuffer)
                 {
@@ -189,9 +192,10 @@ namespace MapGenerator
 
         auto find_start_sectors = [&]() -> bool
         {
-            for (int i = -MAP_SIDE_LENGTH; i < MAP_SIDE_LENGTH; i++)
+            const MapBoundsVec4 mapBounds = get_map_limits();
+            for (int i = mapBounds.zMin; i < mapBounds.zMax; i++)
             {
-                for (int j = -MAP_SIDE_LENGTH; j < MAP_SIDE_LENGTH; j++)
+                for (int j = mapBounds.xMin; j < mapBounds.xMax; j++)
                 {
                     if (terrainMap[get_map_index(i, j)] == Map::SECTOR_1_WALL_VAL && sector_1 == false)
                     {
@@ -223,9 +227,9 @@ namespace MapGenerator
         // mod_map_sector_3();
 
         // N/S/E/W exits // punchouts
-        Maze::punch_sector_exits(terrainMap, MAP_SIDE_LENGTH * 0.5, mazeSecondSector, Map::SECTOR_1_PATHWAY, Map::SECTOR_2_PATHWAY, 4, 0.0f);
-        Maze::punch_sector_exits(terrainMap, MAP_SIDE_LENGTH * 0.5, mazeThirdSector, Map::SECTOR_2_PATHWAY, Map::SECTOR_3_PATHWAY, 4, 0.0f, true);
-        Maze::punch_sector_exits(terrainMap, MAP_SIDE_LENGTH * 0.5, mazeOuterRadius, Map::SECTOR_3_PATHWAY, Map::SECTOR_3_PATHWAY, 4, 0.0f);
+        Maze::punch_sector_exits(terrainMap, 0, mazeSecondSector, Map::SECTOR_1_PATHWAY, Map::SECTOR_2_PATHWAY, 4, 0.0f);
+        Maze::punch_sector_exits(terrainMap, 0, mazeThirdSector, Map::SECTOR_2_PATHWAY, Map::SECTOR_3_PATHWAY, 4, 0.0f, true);
+        Maze::punch_sector_exits(terrainMap, 0, mazeOuterRadius, Map::SECTOR_3_PATHWAY, Map::SECTOR_3_PATHWAY, 4, 0.0f);
 
         // optimze_walls();
         generate_s1_clearspots();
@@ -252,10 +256,12 @@ namespace MapGenerator
                 // Random distance in section 3
                 float dist = mazeThirdSector + ((mazeOuterRadius - mazeThirdSector) / 2);
 
-                int cx = (MAP_SIDE_LENGTH * 0.5) + static_cast<int>(dist * std::cos(angle));
-                int cy = (MAP_SIDE_LENGTH * 0.5) + static_cast<int>(dist * std::sin(angle));
+                const MapBoundsVec4 mapBounds = get_map_limits();
+                int cx = static_cast<int>(dist * std::cos(angle));
+                int cy = static_cast<int>(dist * std::sin(angle));
 
-                if (cx >= radius && cx < MAP_SIDE_LENGTH - radius && cy >= radius && cy < MAP_SIDE_LENGTH - radius)
+                if (cx >= mapBounds.xMin + radius && cx < mapBounds.xMax - radius &&
+                    cy >= mapBounds.zMin + radius && cy < mapBounds.zMax - radius)
                 {
                     // Check if it's in a reasonable place (optional, but good for visibility)
                     // Draw diamond
@@ -282,13 +288,14 @@ namespace MapGenerator
 
     void generate_s1_clearspots()
     {
-        for (int y = -MAP_SIDE_LENGTH; y < MAP_SIDE_LENGTH; y++)
+        const MapBoundsVec4 mapBounds = get_map_limits();
+        for (int y = mapBounds.zMin; y < mapBounds.zMax; y++)
         {
-            for (int x = -MAP_SIDE_LENGTH; x < MAP_SIDE_LENGTH; x++)
+            for (int x = mapBounds.xMin; x < mapBounds.xMax; x++)
             {
 
-                int dx = static_cast<int>(std::abs(x - (MAP_SIDE_LENGTH * 0.5)));
-                int dy = static_cast<int>(std::abs(y - (MAP_SIDE_LENGTH * 0.5)));
+                int dx = std::abs(x);
+                int dy = std::abs(y);
 
                 float distance_sq = dx * dx + dy * dy;
                 int distance = std::sqrt(distance_sq);
@@ -322,15 +329,15 @@ namespace MapGenerator
                         }
                     }
                     // pathwayd suunas kell 12, 3, 6, 9, et player gladeist minema saaks.
-                    else if (sector % 2 == 0 && distance <= (mazeSecondSector / 2) && (x == (MAP_SIDE_LENGTH * 0.5) || y == (MAP_SIDE_LENGTH * 0.5)))
+                    else if (sector % 2 == 0 && distance <= (mazeSecondSector / 2) && (x == 0 || y == 0))
                     {
 
                         int pathwayWidth = 3;
                         int halfWidth = pathwayWidth / 2;
                         for (int i = -halfWidth; i <= halfWidth; i++)
                         {
-                            int targetX = (x == (MAP_SIDE_LENGTH * 0.5)) ? x + i : x;
-                            int targetY = (y == (MAP_SIDE_LENGTH * 0.5)) ? y + i : y;
+                            int targetX = (x == 0) ? x + i : x;
+                            int targetY = (y == 0) ? y + i : y;
                             terrainMap[get_map_index(targetY, targetX)] = Map::SECTOR_1_PATHWAY;
                         }
                     }
@@ -339,7 +346,7 @@ namespace MapGenerator
         }
     }
 
-    void generate_glade(std::vector<int> &terrainMap)
+    void generate_glade()
     {
         MapBoundsVec4 mapBounds = get_map_limits();
         for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)

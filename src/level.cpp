@@ -49,8 +49,8 @@ void LevelInitialize(Level *level)
             const float worldZ = z * LEVEL_TILE_SIZE;
 
             // wtf i am not using this list either.
-            level->groundIndexByTile[tileIndex] = static_cast<int>(level->groundTiles.size());
-            level->groundTiles.push_back({worldX, 0.0f, worldZ});
+            // level->groundIndexByTile[tileIndex] = static_cast<int>(level->groundTiles.size());
+            // level->groundTiles.push_back({worldX, 0.0f, worldZ});
 
             // std::cout << "Tile: " << enumMapToString(tile) << '\n';
 

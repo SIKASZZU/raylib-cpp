@@ -114,6 +114,8 @@ static RenderSnapshot CollectVisibleItems(const Level *level, const Camera *came
         for (int x = mapBounds.xMin; x < mapBounds.xMax; x++)
         {
             const int tile = terrainMap[get_map_index(x, z)];
+
+            // this if statement is god level in gaining performance
             if (tile != Map::GROUND_CUBE && tile != Map::MAZE_WE_DOOR && tile != Map::MAZE_NS_DOOR)
                 continue;
 
@@ -121,8 +123,7 @@ static RenderSnapshot CollectVisibleItems(const Level *level, const Camera *came
             if (!SphereVisible(f, Vector3{position.x, -0.5f * GROUND_MODEL_SCALE, position.z}, groundRadius))
                 continue;
 
-            const RenderItemType type = tile == Map::GROUND_CUBE ? RenderItemType::Ground : RenderItemType::Door;
-            snapshot.items.push_back({type, position, 0.0f});
+            snapshot.items.push_back({tile, position, 0.0f});
         }
     }
 
@@ -165,7 +166,7 @@ static RenderSnapshot CollectVisibleItems(const Level *level, const Camera *came
             occluded = IsOccluded(camera->position, candidates[i].bounds.visual, candidates[j].bounds.occluder);
         }
         if (!occluded)
-            snapshot.items.push_back({RenderItemType::Wall, candidates[i].wall->position,
+            snapshot.items.push_back({Map::WALL_CUBE, candidates[i].wall->position,
                                       candidates[i].wall->rotationDegrees});
     }
 
@@ -179,17 +180,24 @@ RenderSnapshot CaptureRenderSnapshot(const Level *level, const Camera *camera)
 
 static void DrawRenderItem(const ModelAssets &models, const RenderItem &item)
 {
-    switch (item.type)
+    switch (item.mapTileId)
     {
-    case RenderItemType::Ground:
+    case Map::GROUND_CUBE:
         DrawModel(models.at(ModelId::Ground), item.position, GROUND_MODEL_SCALE, WHITE);
         break;
-    case RenderItemType::Door:
-        DrawModel(models.at(ModelId::Cube), item.position, 1.0f, PURPLE);
+
+    case Map::MAZE_NS_DOOR:
+    case Map::MAZE_WE_DOOR:
+        DrawModel(models.at(ModelId::Cube), item.position, 1.0f, GREEN);
         break;
-    case RenderItemType::Wall:
+
+    case Map::WALL_CUBE:
         DrawModelEx(models.at(ModelId::Wall), item.position, Vector3{0.0f, 1.0f, 0.0f}, item.rotationDegrees,
                     Vector3{WALL_MODEL_SCALE, WALL_MODEL_SCALE, WALL_MODEL_SCALE}, WHITE);
+        break;
+
+    default:
+        DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, PURPLE);
         break;
     }
 }

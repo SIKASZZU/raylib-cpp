@@ -2,19 +2,14 @@
 #include "raylib.h"
 #include "level.hpp" // wherever Level / WallInstance live
 #include "model_assets.hpp"
+#include "map.hpp"
 
 #include <vector>
 
-enum class RenderItemType
-{
-    Ground,
-    Door,
-    Wall,
-};
 
 struct RenderItem
 {
-    RenderItemType type;
+    int mapTileId;
     Vector3 position;
     float rotationDegrees;
 };
