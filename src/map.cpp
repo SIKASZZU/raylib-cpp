@@ -47,18 +47,20 @@ namespace MapGenerator
 
     void init()
     {
+        std::cout << "MapGenerator init started..." << '\n';
         terrainMap.assign(get_map_size(), Map::EMPTY);
         // diagonalGrids.clear();
         getS3PatchLocations().clear();
         sector3Cutouts.clear();
         // SECTOR_3_REMOVE_EXTRA_THICKNESS.clear();
         voidPossibleLocations.clear();
-
-        generate_ground();
-        generate_mazes();
         generate_glade();
+        Maze::generate_maze_placeholder(terrainMap, Vector2{50, 50}, 15, 5);
+        // generate_ground();
+        // generate_mazes();
         // generate_cliffs();
         // generate_tunnels();
+        std::cout << "MapGenerator init complete" << '\n';
     }
 
     void generate_ground()

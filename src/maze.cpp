@@ -11,6 +11,7 @@
 
 #include "map.hpp"
 #include "common.hpp"
+#include "maze.hpp"
 
 namespace Maze
 {
@@ -35,6 +36,30 @@ namespace Maze
         static std::random_device rd;
         static std::mt19937 g(rd());
         std::shuffle(directions.begin(), directions.end(), g);
+    }
+
+    // this is a placeholder method just to visualize mazes
+    // Generate area where a maze could be generated onto
+    void generate_maze_placeholder(std::vector<int> &terrainMap, Vector2 startGrid, size_t width, size_t height)
+    {
+        // check if the place is in bounds of map
+        if (!check_point_for_map_bounds(startGrid.x, startGrid.y))
+        {
+            std::cout << "we went outside the map" << '\n';
+            return;
+        }
+        for (size_t x{}; x <= width; x++)
+        {
+            for (size_t z{}; z <= height; z++)
+            {
+                if (!check_point_for_map_bounds(x, z))
+                {
+                    std::cout << "we went outside the map" << '\n';
+                    continue;
+                }
+                terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::GROUND_CUBE;
+            }
+        }
     }
 
     // Recursive maze generation using DFS
@@ -159,9 +184,9 @@ namespace Maze
         int ringRadius,
         int innerPath,
         int outerPath,
-        int numExits = 4,
-        float angleOffset = 0.0f,
-        bool doorsInMiddle = false)
+        int numExits,
+        float angleOffset,
+        bool doorsInMiddle)
     {
 
         const float TWOPI = 2.0f * 3.14159265f;

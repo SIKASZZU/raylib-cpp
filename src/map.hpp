@@ -846,6 +846,14 @@ inline MapBoundsVec4 get_map_limits()
     };
 }
 
+inline bool check_point_for_map_bounds(int x, int z)
+{
+    MapBoundsVec4 limits = get_map_limits();
+    if (limits.xMax < x || x < limits.xMin || limits.zMax < z || z < limits.zMin)
+        return false;
+    return true;
+}
+
 static inline int get_map_width()
 {
     const auto b = get_map_limits();
@@ -868,9 +876,9 @@ inline MapBoundsVec4 get_map_limits_with_camera(const Camera *camera)
 {
     const MapBoundsVec4 m = get_map_limits();
     const int camXMin = (int)floorf((camera->position.x - LIGHT_FAR) / LEVEL_TILE_DIAGONAL);
-    const int camXMax = (int)ceilf((camera->position.x + LIGHT_FAR) / LEVEL_TILE_DIAGONAL);  //  + 1
+    const int camXMax = (int)ceilf((camera->position.x + LIGHT_FAR) / LEVEL_TILE_DIAGONAL); //  + 1
     const int camZMin = (int)floorf((camera->position.z - LIGHT_FAR) / LEVEL_TILE_DIAGONAL);
-    const int camZMax = (int)ceilf((camera->position.z + LIGHT_FAR) / LEVEL_TILE_DIAGONAL);  //  + 1
+    const int camZMax = (int)ceilf((camera->position.z + LIGHT_FAR) / LEVEL_TILE_DIAGONAL); //  + 1
 
     return {
         .xMin = std::max(m.xMin, camXMin),
