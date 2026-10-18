@@ -48,11 +48,28 @@ namespace Maze
             return;
         }
 
+        const int MAZE_SIDE_LENGTH_HALF = MAZE_SIDE_LENGTH * 0.5f;
+
         for (size_t x{}; x < MAZE_SIDE_LENGTH; x++)
         {
             for (size_t z{}; z < MAZE_SIDE_LENGTH; z++)
             {
-                terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::RED_CUBE;
+                if (x == 0 || x == MAZE_SIDE_LENGTH - 1 || z == 0 || z == MAZE_SIDE_LENGTH - 1)
+                {
+                    terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::INGROWN_WALL_CUBE;
+                    if (x == MAZE_SIDE_LENGTH_HALF || x == MAZE_SIDE_LENGTH_HALF - 1)
+                    {
+                        terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::MAZE_NS_DOOR;
+                    }
+                    else if (z == MAZE_SIDE_LENGTH_HALF || z == MAZE_SIDE_LENGTH_HALF - 1)
+                    {
+                        terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::MAZE_WE_DOOR;
+                    }
+                }
+                else
+                {
+                    terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::GROUND_CUBE;
+                }
             }
         }
     }

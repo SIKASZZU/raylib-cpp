@@ -82,10 +82,12 @@ namespace MapGenerator
         sector3Cutouts.clear();
         // SECTOR_3_REMOVE_EXTRA_THICKNESS.clear();
         voidPossibleLocations.clear();
+        generate_glade();
+
         // generate_ground();
         // generate_mazes();
+
         generate_mazes_around();
-        generate_glade();
 
         // generate_cliffs();
         // generate_tunnels();

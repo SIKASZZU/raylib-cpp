@@ -68,19 +68,15 @@ void LevelInitialize(Level *level)
             const int horizontalNeighbors = static_cast<int>(wallWest) + static_cast<int>(wallEast);
             const int verticalNeighbors = static_cast<int>(wallNorth) + static_cast<int>(wallSouth);
 
-            if (int(wallWest) + int(wallEast) + int(wallNorth) + int(wallSouth) > 3)
-            {
-                continue;
-            }
-
             const bool isCorner = horizontalNeighbors == 1 && verticalNeighbors == 1;
+            const bool isIntersection = horizontalNeighbors > 1 && verticalNeighbors > 1;
 
             wall.rotationDegrees = verticalNeighbors > horizontalNeighbors ? 90.0f : 0.0f;
 
             level->wallIndexByTile[tileIndex] = static_cast<int>(level->walls.size());
             level->walls.push_back(wall);
 
-            if (isCorner)
+            if (isCorner || isIntersection)
             {
                 wall.rotationDegrees += 90.0f;
                 level->walls.push_back(wall);
