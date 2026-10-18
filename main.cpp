@@ -24,7 +24,7 @@ int main(void)
     LevelInitialize(&level);
 
     Player player = {};
-    PlayerInitialize(&player, Vector3{7.0f, 0.0f, 7.0f});
+    PlayerInitialize(&player, Vector3{0.0f, 0.0f, 0.0f});
 
     CameraController cameraController = {};
     CameraControllerInitialize(&cameraController, player.position);

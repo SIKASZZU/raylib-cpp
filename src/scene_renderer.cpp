@@ -116,7 +116,7 @@ static RenderSnapshot CollectVisibleItems(const Level *level, const Camera *came
             const int tile = terrainMap[get_map_index(x, z)];
 
             // this if statement is god level in gaining performance
-            if (tile != Map::GROUND_CUBE && tile != Map::MAZE_WE_DOOR && tile != Map::MAZE_NS_DOOR)
+            if (tile == Map::EMPTY)
                 continue;
 
             const Vector3 position = {x * LEVEL_TILE_SIZE, 0.0f, z * LEVEL_TILE_SIZE};
@@ -194,6 +194,18 @@ static void DrawRenderItem(const ModelAssets &models, const RenderItem &item)
     case Map::WALL_CUBE:
         DrawModelEx(models.at(ModelId::Wall), item.position, Vector3{0.0f, 1.0f, 0.0f}, item.rotationDegrees,
                     Vector3{WALL_MODEL_SCALE, WALL_MODEL_SCALE, WALL_MODEL_SCALE}, WHITE);
+        break;
+
+    case Map::RED_CUBE:
+        DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, RED);
+        break;
+
+    case Map::BLUE_CUBE:
+        DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, BLUE);
+        break;
+
+    case Map::YELLOW_CUBE:
+        DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, YELLOW);
         break;
 
     default:

@@ -26,13 +26,13 @@ namespace MapGenerator
 
     /* variables for just map generation */
     std::set<std::pair<int, int>> voidPossibleLocations;
-    int gladeRadius = (MAP_SIDE_LENGTH / 10) >= 10 ? 10 : MAP_SIDE_LENGTH / 10; // if MAP_SIDE_LENGTH / 10 > 10; hard cap to 10.
+    int GLADE_SIDE_LENGTH_HALF = GLADE_SIDE_LENGTH * 0.5f;
 
     int mazeSize = MAP_SIDE_LENGTH_HALF - 4;
     int halfMapSize = MAP_SIDE_LENGTH_HALF;
     int maxMazeSize = 130;
 
-    int mazeInnerRadius = gladeRadius + 1;
+    int mazeInnerRadius = GLADE_SIDE_LENGTH_HALF + 1;
     int mazeOuterRadius = std::min(mazeSize, maxMazeSize);
 
     int mazeThirdSector = mazeOuterRadius - (mazeOuterRadius / 3);
@@ -45,6 +45,34 @@ namespace MapGenerator
     const int cliffWidthHalf{cliffWidth / 2};
     const int tunnelWidth = 7;
 
+    static void generate_mazes_around()
+    {
+        // check if shit is in bounds ?? maybe this works: check_point_for_map_bounds
+        const Vector2 mazeStartPos{
+            .x = (-GLADE_SIDE_LENGTH * 0.5f) - MAZE_SIDE_LENGTH,
+            .y = (-GLADE_SIDE_LENGTH * 0.5f) - MAZE_SIDE_LENGTH,
+        };
+
+        auto coordinate_calculator = [&](size_t index)
+        {
+            size_t colMaze = index % 3;
+            size_t rowMaze = index / 3;
+
+            return Vector2{
+                .x = mazeStartPos.x + (colMaze * MAZE_SIDE_LENGTH),
+                .y = mazeStartPos.y + (rowMaze * MAZE_SIDE_LENGTH),
+            };
+        };
+
+        for (size_t i{}; i < 9; i++)
+        {
+            if (i == 4)
+                continue;
+            Vector2 pos = coordinate_calculator(i);
+            Maze::generate_maze_placeholder(terrainMap, pos, MAZE_SIDE_LENGTH, MAZE_SIDE_LENGTH);
+        }
+    }
+
     void init()
     {
         std::cout << "MapGenerator init started..." << '\n';
@@ -55,9 +83,9 @@ namespace MapGenerator
         // SECTOR_3_REMOVE_EXTRA_THICKNESS.clear();
         voidPossibleLocations.clear();
         generate_glade();
-        Maze::generate_maze_placeholder(terrainMap, Vector2{50, 50}, 15, 5);
         // generate_ground();
         // generate_mazes();
+        generate_mazes_around();
         // generate_cliffs();
         // generate_tunnels();
         std::cout << "MapGenerator init complete" << '\n';
@@ -361,13 +389,13 @@ namespace MapGenerator
 
                 // Glade (square) and Ingrown walls around glade
                 int thicknessGladeWall = 1;
-                if (dx <= gladeRadius + thicknessGladeWall && dy <= gladeRadius + thicknessGladeWall)
+                if (dx <= GLADE_SIDE_LENGTH_HALF + thicknessGladeWall && dy <= GLADE_SIDE_LENGTH_HALF + thicknessGladeWall)
                 {
                     // inner glade
                     terrainMap[get_map_index(x, y)] = Map::GROUND_CUBE;
 
                     // walls outside of glade radius
-                    if (dx == gladeRadius + 1 || dy == gladeRadius + 1) // +1 because it does not calculate corners seperately, good ig
+                    if (dx == GLADE_SIDE_LENGTH_HALF + 1 || dy == GLADE_SIDE_LENGTH_HALF + 1) // +1 because it does not calculate corners seperately, good ig
                     {
                         if (x != 0 && y != 0)
                         {

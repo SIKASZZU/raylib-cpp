@@ -27,6 +27,9 @@ constexpr float LIGHT_FAR = 1500.0f;
 
 // map
 #define MAP_SIDE_LENGTH 325
+
+#define GLADE_SIDE_LENGTH 10
+
 #define MAP_SIDE_LENGTH_HALF (int(MAP_SIDE_LENGTH * 0.5f))
 #define LEVEL_TILE_SIZE 20.0f
 #define LEVEL_TILE_DIAGONAL (LEVEL_TILE_SIZE * 0.7072f)
@@ -39,6 +42,9 @@ constexpr float LIGHT_FAR = 1500.0f;
 
 #define WALL_HEIGHT (LEVEL_TILE_SIZE)
 #define WALL_MODEL_SCALE (LEVEL_TILE_SIZE / 12.04f) // 12.04f is model size
+
+// maze size
+#define MAZE_SIDE_LENGTH 10
 
 // shaders
 #define SHADOW_MAP_SIZE 2048
