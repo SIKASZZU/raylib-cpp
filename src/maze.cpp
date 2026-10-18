@@ -42,21 +42,16 @@ namespace Maze
     // Generate area where a maze could be generated onto
     void generate_maze_placeholder(std::vector<int> &terrainMap, Vector2 startGrid, size_t width, size_t height)
     {
-        // check if the place is in bounds of map
-        // if (!check_point_for_map_bounds(startGrid.x, startGrid.y))
-        // {
-        //     std::cout << "we went outside the map" << '\n';
-        //     return;
-        // }
+        if (!check_point_for_map_bounds(startGrid.x, startGrid.y) || !check_point_for_map_bounds(startGrid.x + MAZE_SIDE_LENGTH, startGrid.y + MAZE_SIDE_LENGTH))
+        {
+            std::cout << "we went outside the map" << '\n';
+            return;
+        }
+
         for (size_t x{}; x < MAZE_SIDE_LENGTH; x++)
         {
             for (size_t z{}; z < MAZE_SIDE_LENGTH; z++)
             {
-                // if (!check_point_for_map_bounds(x, z))
-                // {
-                //     std::cout << "we went outside the map" << '\n';
-                //     continue;
-                // }
                 terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::RED_CUBE;
             }
         }

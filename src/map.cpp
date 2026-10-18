@@ -82,10 +82,11 @@ namespace MapGenerator
         sector3Cutouts.clear();
         // SECTOR_3_REMOVE_EXTRA_THICKNESS.clear();
         voidPossibleLocations.clear();
-        generate_glade();
         // generate_ground();
         // generate_mazes();
         generate_mazes_around();
+        generate_glade();
+
         // generate_cliffs();
         // generate_tunnels();
         std::cout << "MapGenerator init complete" << '\n';
@@ -379,36 +380,30 @@ namespace MapGenerator
     void generate_glade()
     {
         MapBoundsVec4 mapBounds = get_map_limits();
+        const int gladeMin = -(GLADE_SIDE_LENGTH * 0.5f);
+        const int gladeMax = gladeMin + GLADE_SIDE_LENGTH;
+
         for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)
         {
             for (int x = mapBounds.xMin; x < mapBounds.xMax; x++)
             {
                 int y = z;
-                int dx = std::abs(x);
-                int dy = std::abs(y);
 
-                // Glade (square) and Ingrown walls around glade
-                int thicknessGladeWall = 1;
-                if (dx <= GLADE_SIDE_LENGTH_HALF + thicknessGladeWall && dy <= GLADE_SIDE_LENGTH_HALF + thicknessGladeWall)
+                if (x >= gladeMin && x < gladeMax && y >= gladeMin && y < gladeMax)
                 {
-                    // inner glade
                     terrainMap[get_map_index(x, y)] = Map::GROUND_CUBE;
 
-                    // walls outside of glade radius
-                    if (dx == GLADE_SIDE_LENGTH_HALF + 1 || dy == GLADE_SIDE_LENGTH_HALF + 1) // +1 because it does not calculate corners seperately, good ig
+                    if (x == gladeMin || x == gladeMax - 1 || y == gladeMin || y == gladeMax - 1)
                     {
-                        if (x != 0 && y != 0)
-                        {
-                            terrainMap[get_map_index(x, y)] = Map::INGROWN_WALL_CUBE;
-                        }
+                        terrainMap[get_map_index(x, y)] = Map::INGROWN_WALL_CUBE;
 
-                        if (x == 0 || x - 1 == 0)
-                        {
-                            terrainMap[get_map_index(x, y)] = Map::MAZE_WE_DOOR;
-                        }
-                        if (y == 0 || y - 1 == 0)
+                        if ((y == gladeMin || y == gladeMax - 1) && (x == -1 || x == 0))
                         {
                             terrainMap[get_map_index(x, y)] = Map::MAZE_NS_DOOR;
+                        }
+                        else if ((x == gladeMin || x == gladeMax - 1) && (y == -1 || y == 0))
+                        {
+                            terrainMap[get_map_index(x, y)] = Map::MAZE_WE_DOOR;
                         }
                     }
                 }
