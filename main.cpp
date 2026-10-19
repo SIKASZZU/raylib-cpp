@@ -37,8 +37,7 @@ int main(void)
     int showShadowMode = 0;
 
     bool renderStop = false;
-    RenderSnapshot renderSnapshot;
-    RenderStats renderStats;
+    SceneVector sceneVector;
 
     while (!WindowShouldClose())
     {
@@ -70,9 +69,9 @@ int main(void)
         {
             renderStop = !renderStop;
             if (renderStop)
-                renderSnapshot = CaptureRenderSnapshot(&level, &camera);
+                sceneVector = Scene::createSceneVector(&level, &camera);
             else
-                renderSnapshot.items.clear();
+                sceneVector.items.clear();
         }
 
         // DRAWING
@@ -82,7 +81,7 @@ int main(void)
         ClearBackground(Color{SKY_R, SKY_G, SKY_B, 255});
 
         BeginMode3D(camera);
-        renderStats = DrawLevel(models, &level, &camera, renderStop ? &renderSnapshot : nullptr);
+        Scene::draw(models, &level, &camera, renderStop ? &sceneVector : nullptr);
         EndMode3D();
 
         Color textColor = GREEN;
@@ -96,12 +95,12 @@ int main(void)
         DrawText(TextFormat("- Velocity Len: (%06.3f)", PlayerGetHorizontalSpeed(&player)), 15, 60, 10, textColor);
         DrawText(TextFormat("- Shadow debug (F3): %d", showShadowMode), 15, 75, 10, textColor);
         DrawText(TextFormat("- Shadow debug (F3): %d", showShadowMode), 15, 90, 10, textColor);
-        DrawText(TextFormat("- Draw calls: %d", renderStats.drawCalls), 15, 105, 10, textColor);
+        // DrawText(TextFormat("- Draw calls: %d", renderStats.drawCalls), 15, 105, 10, textColor);
         DrawText(TextFormat("- Wall count: %d", level.walls.size()), 15, 120, 10, textColor);
-        DrawText(TextFormat("- In-frustum instances: %d / %d (%d culled)",
-                            renderStats.visibleInstances, renderStats.totalInstances,
-                            renderStats.totalInstances - renderStats.visibleInstances),
-                 15, 135, 10, textColor);
+        // DrawText(TextFormat("- In-frustum instances: %d / %d (%d culled)",
+        //                     renderStats.visibleInstances, renderStats.totalInstances,
+        //                     renderStats.totalInstances - renderStats.visibleInstances),
+        //          15, 135, 10, textColor);
 
         // ON-SCREEN TOP-RIGHT
         DrawText(TextFormat("- xyz: %7.2f %7.2f %7.2f", player.position.x, player.position.y, player.position.z), screenWidth - 350, 0, 20, textColor); // player pos

@@ -6,26 +6,24 @@
 
 #include <vector>
 
-
-struct RenderItem
+struct SceneItem
 {
     int mapTileId;
     Vector3 position;
     float rotationDegrees;
 };
 
-struct RenderSnapshot
+struct SceneVector
 {
-    std::vector<RenderItem> items;
+    std::vector<SceneItem> items;
 };
 
-struct RenderStats
-{
-    int totalInstances; // how you know that this is truth, ps you dont
-    int visibleInstances;
-    int drawCalls;
-};
 
-RenderSnapshot CaptureRenderSnapshot(const Level *level, const Camera *camera);
-RenderStats DrawLevel(const ModelAssets &models, const Level *level, const Camera *camera,
-                      const RenderSnapshot *renderSnapshot = nullptr);
+class Scene {
+public:
+    SceneVector sceneItems;
+    static void draw(const ModelAssets& models, const Level* level, const Camera* camera, const SceneVector* sceneItems = nullptr);
+    // can this function be erased, when stopping the rendering with f4 is not needed anymore?
+    // can it be only called from draw and that's it?
+    static SceneVector createSceneVector(const Level* level, const Camera* camera);
+};

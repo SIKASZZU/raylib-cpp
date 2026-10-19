@@ -14,7 +14,7 @@ struct ViewFrustum
     float tanH, tanV, secH, secV;
 };
 
-static ViewFrustum MakeFrustum(const Camera &cam)
+static ViewFrustum MakeFrustum(const Camera& cam)
 {
     ViewFrustum f;
     f.pos = cam.position;
@@ -28,7 +28,7 @@ static ViewFrustum MakeFrustum(const Camera &cam)
     return f;
 }
 
-static bool SphereVisible(const ViewFrustum &f, Vector3 center, float radius)
+static bool SphereVisible(const ViewFrustum& f, Vector3 center, float radius)
 {
     const Vector3 o = Vector3Subtract(center, f.pos);
     const float depth = Vector3DotProduct(o, f.fwd);
@@ -41,7 +41,7 @@ static bool SphereVisible(const ViewFrustum &f, Vector3 center, float radius)
     const float h = fabsf(Vector3DotProduct(o, f.right));
     const float v = fabsf(Vector3DotProduct(o, f.up));
     return h <= depth * f.tanH + radius * f.secH &&
-           v <= depth * f.tanV + radius * f.secV;
+        v <= depth * f.tanV + radius * f.secV;
 }
 
 struct WallBounds
@@ -50,7 +50,7 @@ struct WallBounds
     BoundingBox occluder; // inner solid box (the collision proxy), used as the blocker
 };
 
-static WallBounds MakeWallBounds(const WallInstance &w)
+static WallBounds MakeWallBounds(const WallInstance& w)
 {
     // Walls are rotated in 90 degree steps, so swapping x/z keeps the AABB exact.
     const bool swapped = fabsf(fmodf(w.rotationDegrees, 180.0f)) > 45.0f;
@@ -65,46 +65,46 @@ static WallBounds MakeWallBounds(const WallInstance &w)
 
     const Vector3 p = w.position;
     WallBounds b;
-    b.occluder = {{p.x - hx, p.y, p.z - hz}, {p.x + hx, p.y + WALL_HEIGHT, p.z + hz}};
-    b.visual = {{p.x - vx, p.y - vy, p.z - vz}, {p.x + vx, p.y + WALL_HEIGHT + vy, p.z + vz}};
+    b.occluder = { { p.x - hx, p.y, p.z - hz },{ p.x + hx, p.y + WALL_HEIGHT, p.z + hz } };
+    b.visual = { { p.x - vx, p.y - vy, p.z - vz },{ p.x + vx, p.y + WALL_HEIGHT + vy, p.z + vz } };
     return b;
 }
 
-static bool PointInBox(Vector3 p, const BoundingBox &b)
+static bool PointInBox(Vector3 p, const BoundingBox& b)
 {
     return p.x >= b.min.x && p.x <= b.max.x &&
-           p.y >= b.min.y && p.y <= b.max.y &&
-           p.z >= b.min.z && p.z <= b.max.z;
+        p.y >= b.min.y && p.y <= b.max.y &&
+        p.z >= b.min.z && p.z <= b.max.z;
 }
 
-static bool IsOccluded(const Vector3 &cam, const BoundingBox &candidate, const BoundingBox &occluder)
+static bool IsOccluded(const Vector3& cam, const BoundingBox& candidate, const BoundingBox& occluder)
 {
     const Vector3 c[8] = {
-        {candidate.min.x, candidate.min.y, candidate.min.z},
-        {candidate.max.x, candidate.min.y, candidate.min.z},
-        {candidate.min.x, candidate.max.y, candidate.min.z},
-        {candidate.max.x, candidate.max.y, candidate.min.z},
-        {candidate.min.x, candidate.min.y, candidate.max.z},
-        {candidate.max.x, candidate.min.y, candidate.max.z},
-        {candidate.min.x, candidate.max.y, candidate.max.z},
-        {candidate.max.x, candidate.max.y, candidate.max.z},
+        { candidate.min.x, candidate.min.y, candidate.min.z },
+        { candidate.max.x, candidate.min.y, candidate.min.z },
+        { candidate.min.x, candidate.max.y, candidate.min.z },
+        { candidate.max.x, candidate.max.y, candidate.min.z },
+        { candidate.min.x, candidate.min.y, candidate.max.z },
+        { candidate.max.x, candidate.min.y, candidate.max.z },
+        { candidate.min.x, candidate.max.y, candidate.max.z },
+        { candidate.max.x, candidate.max.y, candidate.max.z },
     };
-    for (const Vector3 &p : c)
+    for (const Vector3& p : c)
     {
         const Vector3 d = Vector3Subtract(p, cam);
         const float len = Vector3Length(d);
         if (len < 1e-4f)
             return false;
-        const RayCollision hit = GetRayCollisionBox({cam, Vector3Scale(d, 1.0f / len)}, occluder);
+        const RayCollision hit = GetRayCollisionBox({ cam, Vector3Scale(d, 1.0f / len) }, occluder);
         if (!hit.hit || hit.distance >= len)
             return false; // this corner is visible
     }
     return true;
 }
 
-static RenderSnapshot CollectVisibleItems(const Level *level, const Camera *camera)
+static SceneVector _createSceneVector(const Level* level, const Camera* camera)
 {
-    RenderSnapshot snapshot;
+    SceneVector snapshot;
     const ViewFrustum f = MakeFrustum(*camera);
     const float groundRadius = LEVEL_TILE_SIZE * 0.7071f;
     const MapBoundsVec4 mapBounds = get_map_limits_with_camera(camera);
@@ -119,11 +119,11 @@ static RenderSnapshot CollectVisibleItems(const Level *level, const Camera *came
             if (tile == Map::EMPTY)
                 continue;
 
-            const Vector3 position = {x * LEVEL_TILE_SIZE, 0.0f, z * LEVEL_TILE_SIZE};
-            if (!SphereVisible(f, Vector3{position.x, -0.5f * GROUND_MODEL_SCALE, position.z}, groundRadius))
+            const Vector3 position = { x * LEVEL_TILE_SIZE, 0.0f, z * LEVEL_TILE_SIZE };
+            if (!SphereVisible(f, Vector3{ position.x, -0.5f * GROUND_MODEL_SCALE, position.z }, groundRadius))
                 continue;
 
-            snapshot.items.push_back({tile, position, 0.0f});
+            snapshot.items.push_back({ tile, position, 0.0f });
         }
     }
 
@@ -135,25 +135,25 @@ static RenderSnapshot CollectVisibleItems(const Level *level, const Camera *came
     // 1. cheap frustum pass
     struct Candidate
     {
-        const WallInstance *wall;
+        const WallInstance* wall;
         WallBounds bounds;
         float distSq;
     };
     std::vector<Candidate> candidates;
     candidates.reserve(level->walls.size());
 
-    for (const WallInstance &wall : level->walls)
+    for (const WallInstance& wall : level->walls)
     {
-        const Vector3 center = {wall.position.x, wall.position.y + height * 0.5f, wall.position.z};
+        const Vector3 center = { wall.position.x, wall.position.y + height * 0.5f, wall.position.z };
         if (!SphereVisible(f, center, wallRadius))
             continue;
-        candidates.push_back({&wall, MakeWallBounds(wall), Vector3DistanceSqr(center, camera->position)});
+        candidates.push_back({ &wall, MakeWallBounds(wall), Vector3DistanceSqr(center, camera->position) });
     }
 
     // 2. nearest first, so the first blockers we test are the most likely ones
     std::sort(candidates.begin(), candidates.end(),
-              [](const Candidate &a, const Candidate &b)
-              { return a.distSq < b.distSq; });
+        [](const Candidate& a, const Candidate& b)
+        { return a.distSq < b.distSq; });
 
     // 3. occlusion pass: only walls nearer than the candidate can block it
     for (size_t i = 0; i < candidates.size(); i++)
@@ -166,19 +166,14 @@ static RenderSnapshot CollectVisibleItems(const Level *level, const Camera *came
             occluded = IsOccluded(camera->position, candidates[i].bounds.visual, candidates[j].bounds.occluder);
         }
         if (!occluded)
-            snapshot.items.push_back({Map::WALL_CUBE, candidates[i].wall->position,
-                                      candidates[i].wall->rotationDegrees});
+            snapshot.items.push_back({ Map::WALL_CUBE, candidates[i].wall->position,
+                                      candidates[i].wall->rotationDegrees });
     }
 
     return snapshot;
 }
 
-RenderSnapshot CaptureRenderSnapshot(const Level *level, const Camera *camera)
-{
-    return CollectVisibleItems(level, camera);
-}
-
-static void DrawRenderItem(const ModelAssets &models, const RenderItem &item)
+static void _drawItem(const ModelAssets& models, const SceneItem item)
 {
     switch (item.mapTileId)
     {
@@ -192,8 +187,8 @@ static void DrawRenderItem(const ModelAssets &models, const RenderItem &item)
         break;
 
     case Map::WALL_CUBE:
-        DrawModelEx(models.at(ModelId::Wall), item.position, Vector3{0.0f, 1.0f, 0.0f}, item.rotationDegrees,
-                    Vector3{WALL_MODEL_SCALE, WALL_MODEL_SCALE, WALL_MODEL_SCALE}, WHITE);
+        DrawModelEx(models.at(ModelId::Wall), item.position, Vector3{ 0.0f, 1.0f, 0.0f }, item.rotationDegrees,
+            Vector3{ WALL_MODEL_SCALE, WALL_MODEL_SCALE, WALL_MODEL_SCALE }, WHITE);
         break;
 
     case Map::RED_CUBE:
@@ -214,32 +209,23 @@ static void DrawRenderItem(const ModelAssets &models, const RenderItem &item)
     }
 }
 
-RenderStats DrawLevel(const ModelAssets &models, const Level *level, const Camera *camera,
-                      const RenderSnapshot *renderSnapshot)
+
+void Scene::draw(const ModelAssets& models, const Level* level, const Camera* camera, const SceneVector* sceneItems)
 {
-    RenderStats stats = {};
-    RenderSnapshot currentView;
-    if (renderSnapshot == nullptr)
+    SceneVector currentView;
+    if (sceneItems == nullptr)
     {
-        currentView = CollectVisibleItems(level, camera);
-        renderSnapshot = &currentView;
+        currentView = _createSceneVector(level, camera);
+        sceneItems = &currentView;
     }
 
-    stats.totalInstances = 4 * MAP_SIDE_LENGTH * MAP_SIDE_LENGTH + static_cast<int>(level->walls.size());
-    for (const RenderItem &item : renderSnapshot->items)
+    for (const SceneItem& item : sceneItems->items)
     {
-        DrawRenderItem(models, item);
-        stats.visibleInstances++;
-        stats.drawCalls++;
+        _drawItem(models, item);
     }
+}
 
-    // ---- sun: relative to the camera so the far plane never clips it ----
-    const Vector3 sunOffset = {300.0f, 300.0f, 0.0f};
-    const float sunDist = LIGHT_FAR * 0.9f;
-    const float sunRadius = 100.0f * sunDist / Vector3Length(sunOffset);
-    DrawSphere(Vector3Add(camera->position, Vector3Scale(Vector3Normalize(sunOffset), sunDist)),
-               sunRadius, Color{255, 215, 0, 255});
-    stats.drawCalls++;
-
-    return stats;
+SceneVector Scene::createSceneVector(const Level* level, const Camera* camera)
+{
+    return _createSceneVector(level, camera);
 }
