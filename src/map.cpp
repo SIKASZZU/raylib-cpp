@@ -47,16 +47,24 @@ namespace MapGenerator
 
     static void generate_mazes_around()
     {
-        // check if shit is in bounds ?? maybe this works: check_point_for_map_bounds
+        const int MAZE_PER_MAP_SIDE{7};
+        const int TOTAL_MAZES{MAZE_PER_MAP_SIDE * MAZE_PER_MAP_SIDE};
+        const int GLADE_INDEX = std::floor(TOTAL_MAZES * 0.5f);
+        const int LAYER_OF_MAZES{GLADE_INDEX / MAZE_PER_MAP_SIDE};
+        std::cout << "LAYERS OF MAZES: " << LAYER_OF_MAZES << '\n'; // like a cinnamon roll
+        std::cout << "GLADE_INDEX:     " << GLADE_INDEX << '\n';
+        std::cout << "TOTAL_MAZES:     " << TOTAL_MAZES << '\n';
+
+        // TODO: check if shit is in bounds ?? maybe this works: check_point_for_map_bounds
         const Vector2 mazeStartPos{
-            .x = (-GLADE_SIDE_LENGTH * 0.5f) - MAZE_SIDE_LENGTH,
-            .y = (-GLADE_SIDE_LENGTH * 0.5f) - MAZE_SIDE_LENGTH,
+            .x = (-GLADE_SIDE_LENGTH * 0.5f) - (MAZE_SIDE_LENGTH * (int(GLADE_INDEX / MAZE_PER_MAP_SIDE))),
+            .y = (-GLADE_SIDE_LENGTH * 0.5f) - (MAZE_SIDE_LENGTH * (int(GLADE_INDEX / MAZE_PER_MAP_SIDE))),
         };
 
         auto coordinate_calculator = [&](size_t index)
         {
-            size_t colMaze = index % 3;
-            size_t rowMaze = index / 3;
+            size_t colMaze = index % MAZE_PER_MAP_SIDE;
+            size_t rowMaze = index / MAZE_PER_MAP_SIDE;
 
             return Vector2{
                 .x = mazeStartPos.x + (colMaze * MAZE_SIDE_LENGTH),
@@ -64,10 +72,12 @@ namespace MapGenerator
             };
         };
 
-        for (size_t i{}; i < 9; i++)
+        for (size_t i{}; i < TOTAL_MAZES; i++)
         {
-            if (i == 4)
+            if (i == GLADE_INDEX)
+            {
                 continue;
+            }
             Vector2 pos = coordinate_calculator(i);
             Maze::generate_maze_placeholder(terrainMap, pos, MAZE_SIDE_LENGTH, MAZE_SIDE_LENGTH);
         }
@@ -395,6 +405,13 @@ namespace MapGenerator
                 {
                     terrainMap[get_map_index(x, y)] = Map::GROUND_CUBE;
 
+                    // elevator in the middle of the glade
+                    if (x == 0 && y == 0)
+                    {
+                        terrainMap[get_map_index(x, y)] = Map::YELLOW_CUBE;
+                    }
+
+                    // glade surrounded by walls and doors
                     if (x == gladeMin || x == gladeMax - 1 || y == gladeMin || y == gladeMax - 1)
                     {
                         terrainMap[get_map_index(x, y)] = Map::INGROWN_WALL_CUBE;
