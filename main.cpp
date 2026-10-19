@@ -104,7 +104,7 @@ int main(void)
 
         // ON-SCREEN TOP-RIGHT
         DrawText(TextFormat("- xyz: %7.2f %7.2f %7.2f", player.position.x, player.position.y, player.position.z), screenWidth - 350, 0, 20, textColor); // player pos
-        DrawText(TextFormat("- xyzgrid: %7.2f %7.2f %7.2f", player.position.x / LEVEL_TILE_SIZE, player.position.y / LEVEL_TILE_SIZE, player.position.z / LEVEL_TILE_SIZE), screenWidth - 350, 30, 20, textColor); // player pos
+        DrawText(TextFormat("-grid: %4.0f %4.0f %4.0f", player.position.x / LEVEL_TILE_SIZE, player.position.y / LEVEL_TILE_SIZE, player.position.z / LEVEL_TILE_SIZE), screenWidth - 350, 20, 30, textColor); // player pos
 
         // ON-SCREEN BOTTOM-LEFT
         DrawFPS(10, screenHeight - 20); // fps

@@ -183,7 +183,7 @@ static void _drawItem(const ModelAssets& models, const SceneItem item)
 
     case Map::MAZE_NS_DOOR:
     case Map::MAZE_WE_DOOR:
-        DrawModel(models.at(ModelId::Cube), item.position, 1.0f, GREEN);
+        DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, GREEN);
         break;
 
     case Map::WALL_CUBE:
@@ -201,6 +201,10 @@ static void _drawItem(const ModelAssets& models, const SceneItem item)
 
     case Map::YELLOW_CUBE:
         DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, YELLOW);
+        break;
+
+    case Map::GREEN_CUBE:
+        DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, GREEN);
         break;
 
     default:
