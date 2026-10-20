@@ -9,6 +9,7 @@
 #include "src/player.hpp"
 #include "src/scene_renderer.hpp"
 #include "src/model_assets.hpp"
+#include "src/asterion.hpp"
 
 int main(void)
 {
@@ -24,7 +25,7 @@ int main(void)
     LevelInitialize(&level);
 
     Player player = {};
-    PlayerInitialize(&player, Vector3{0.0f, 0.0f, 0.0f});
+    PlayerInitialize(&player, Vector3{ 0.0f, 0.0f, 0.0f });
 
     CameraController cameraController = {};
     CameraControllerInitialize(&cameraController, player.position);
@@ -38,6 +39,9 @@ int main(void)
 
     bool renderStop = false;
     SceneVector sceneVector;
+
+    Walker asterion1;
+    asterion1.Init(models);
 
     while (!WindowShouldClose())
     {
@@ -56,13 +60,13 @@ int main(void)
         while (physicsAccumulator >= PHYSICS_STEP)
         {
             PlayerUpdate(&player, &level, CameraControllerGetYaw(&cameraController),
-                         sideway, forward, jumpHolding, crouching, PHYSICS_STEP);
+                sideway, forward, jumpHolding, crouching, PHYSICS_STEP);
             jumpQueued = false;
             physicsAccumulator -= PHYSICS_STEP;
         }
 
         CameraControllerUpdate(&cameraController, player.position, player.isGrounded,
-                               sideway, forward, crouching, delta);
+            sideway, forward, crouching, delta);
         Camera camera = CameraControllerGetCamera(&cameraController);
 
         if (IsKeyPressed(KEY_F4))
@@ -74,14 +78,23 @@ int main(void)
                 sceneVector.items.clear();
         }
 
+        asterion1.Update(delta, player.position);
+
         // DRAWING
 
         BeginDrawing();
 
-        ClearBackground(Color{SKY_R, SKY_G, SKY_B, 255});
+        ClearBackground(Color{ SKY_R, SKY_G, SKY_B, 255 });
 
         BeginMode3D(camera);
         Scene::draw(models, &level, &camera, renderStop ? &sceneVector : nullptr);
+        auto dump = [](const char* n, const Model& m) {
+            TraceLog(LOG_INFO, "%s meshes=%d mats=%d meshMaterial=%p valid=%d",
+                n, m.meshCount, m.materialCount, (void*)m.meshMaterial, (int)IsModelValid(m));
+            };
+        dump("body", asterion1.body); dump("upper", asterion1.upper); dump("lower", asterion1.lower);
+        asterion1.Draw();
+
         EndMode3D();
 
         Color textColor = GREEN;

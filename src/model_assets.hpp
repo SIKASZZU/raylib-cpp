@@ -8,9 +8,12 @@ enum class ModelId
     Wall,
     Ground,
     Cube,
+    AsterionBody,
+    AsterionUpper,
+    AsterionLower,
 };
 
 using ModelAssets = std::unordered_map<ModelId, Model>;
 
 ModelAssets LoadModelAssets();
-void UnloadModelAssets(const ModelAssets &models);
+void UnloadModelAssets(const ModelAssets& models);

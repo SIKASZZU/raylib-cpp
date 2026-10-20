@@ -1,0 +1,12 @@
+newmtl flesh
+Kd 0.36 0.39 0.31
+Ka 1 1 1
+newmtl metal
+Kd 0.22 0.23 0.26
+Ka 1 1 1
+newmtl bone
+Kd 0.62 0.57 0.46
+Ka 1 1 1
+newmtl eye
+Kd 1.00 0.45 0.10
+Ka 1 1 1
