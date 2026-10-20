@@ -22,7 +22,7 @@ static bool IsWallTile(int tile)
     }
 }
 
-void LevelInitialize(Level *level)
+void LevelInitialize(Level* level)
 {
     // terrainMap
     MapGenerator::init();
@@ -48,39 +48,24 @@ void LevelInitialize(Level *level)
             const float worldX = x * LEVEL_TILE_SIZE;
             const float worldZ = z * LEVEL_TILE_SIZE;
 
-            // wtf i am not using this list either.
-            // level->groundIndexByTile[tileIndex] = static_cast<int>(level->groundTiles.size());
-            // level->groundTiles.push_back({worldX, 0.0f, worldZ});
-
-            // std::cout << "Tile: " << enumMapToString(tile) << '\n';
-
             if (!IsWallTile(tile))
                 continue;
 
             WallInstance wall = {};
-            wall.position = {worldX, 0.0f, worldZ};
+            wall.position = { worldX, 0.0f, worldZ };
+            level->wallIndexByTile[tileIndex] = static_cast<int>(level->walls.size());
 
             const bool wallWest = x > mapBounds.xMin && IsWallTile(terrainMap[get_map_index(x - 1, z)]);
             const bool wallEast = x + 1 < mapBounds.xMax && IsWallTile(terrainMap[get_map_index(x + 1, z)]);
             const bool wallNorth = z > mapBounds.zMin && IsWallTile(terrainMap[get_map_index(x, z - 1)]);
             const bool wallSouth = z + 1 < mapBounds.zMax && IsWallTile(terrainMap[get_map_index(x, z + 1)]);
 
-            const int horizontalNeighbors = static_cast<int>(wallWest) + static_cast<int>(wallEast);
-            const int verticalNeighbors = static_cast<int>(wallNorth) + static_cast<int>(wallSouth);
-
-            const bool isCorner = horizontalNeighbors == 1 && verticalNeighbors == 1;
-            const bool isIntersection = horizontalNeighbors > 1 && verticalNeighbors > 1;
-
-            wall.rotationDegrees = verticalNeighbors > horizontalNeighbors ? 90.0f : 0.0f;
-
-            level->wallIndexByTile[tileIndex] = static_cast<int>(level->walls.size());
-            level->walls.push_back(wall);
-
-            if (isCorner || isIntersection)
-            {
-                wall.rotationDegrees += 90.0f;
-                level->walls.push_back(wall);
+            // always have the large face of wall towards random stuff thats not walls.
+            if (!wallEast || !wallWest) {
+                wall.rotationDegrees = 90.0f;
             }
+
+            level->walls.push_back(wall);
         }
     }
 }

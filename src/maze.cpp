@@ -56,7 +56,7 @@ namespace Maze
             {
                 if (x == 0 || x == MAZE_SIDE_LENGTH - 1 || z == 0 || z == MAZE_SIDE_LENGTH - 1)
                 {
-                    terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::INGROWN_WALL_CUBE;
+                    terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::WALL_CUBE;
                     if (x == MAZE_SIDE_LENGTH_HALF || x == MAZE_SIDE_LENGTH_HALF - 1)
                     {
                         terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::MAZE_NS_DOOR;

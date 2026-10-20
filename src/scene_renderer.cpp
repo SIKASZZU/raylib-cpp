@@ -7,6 +7,27 @@
 
 #include <raymath.h>
 
+// temp method
+static bool IsWallTile(int tile)
+{
+    switch (tile)
+    {
+    case Map::WALL_CUBE:
+    case Map::WALL_CUBE_GROUND:
+    case Map::WALL_CUBE_SPRITE:
+    case Map::INGROWN_WALL_CUBE:
+    case Map::SECTOR_1_WALL_VAL:
+    case Map::SECTOR_2_WALL_VAL:
+    case Map::SECTOR_3_WALL_VAL:
+    case Map::TUNNEL_WALL:
+    case Map::TREE_TRUNK:
+        return true;
+    default:
+        return false;
+    }
+}
+
+
 // Camera basis and tangents, computed once per frame instead of once per object.
 struct ViewFrustum
 {
@@ -116,7 +137,7 @@ static SceneVector _createSceneVector(const Level* level, const Camera* camera)
             const int tile = terrainMap[get_map_index(x, z)];
 
             // this if statement is god level in gaining performance
-            if (tile == Map::EMPTY)
+            if (tile == Map::EMPTY || IsWallTile(tile))
                 continue;
 
             const Vector3 position = { x * LEVEL_TILE_SIZE, 0.0f, z * LEVEL_TILE_SIZE };
@@ -189,6 +210,11 @@ static void _drawItem(const ModelAssets& models, const SceneItem item)
     case Map::WALL_CUBE:
         DrawModelEx(models.at(ModelId::Wall), item.position, Vector3{ 0.0f, 1.0f, 0.0f }, item.rotationDegrees,
             Vector3{ WALL_MODEL_SCALE, WALL_MODEL_SCALE, WALL_MODEL_SCALE }, WHITE);
+        break;
+    
+    case Map::INGROWN_WALL_CUBE:
+        DrawModelEx(models.at(ModelId::Wall), item.position, Vector3{ 0.0f, 1.0f, 0.0f }, item.rotationDegrees,
+            Vector3{ 2.0f * WALL_MODEL_SCALE, 2.0f * WALL_MODEL_SCALE, 2.0f * WALL_MODEL_SCALE }, BLACK);
         break;
 
     case Map::RED_CUBE:

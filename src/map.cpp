@@ -12,10 +12,10 @@
 #include "maze.hpp"
 #include "game_config.hpp"
 
-std::vector<int> terrainMap((MAP_SIDE_LENGTH * MAP_SIDE_LENGTH), 0);
+std::vector<int> terrainMap((MAP_SIDE_LENGTH* MAP_SIDE_LENGTH), 0);
 std::unordered_set<uint32_t> sector3Cutouts;
 
-std::set<std::pair<int, int>> &getS3PatchLocations()
+std::set<std::pair<int, int>>& getS3PatchLocations()
 {
     static std::set<std::pair<int, int>> s3PatchLocations;
     return s3PatchLocations;
@@ -42,15 +42,15 @@ namespace MapGenerator
 
     // including wall for each side
     const int cliffWidth = 4;
-    const int cliffWidthHalf{cliffWidth / 2};
+    const int cliffWidthHalf{ cliffWidth / 2 };
     const int tunnelWidth = 7;
 
-    static void generate_mazes_around()
+    static void _generate_mazes_around()
     {
-        const int MAZE_PER_MAP_SIDE{7};
-        const int TOTAL_MAZES{MAZE_PER_MAP_SIDE * MAZE_PER_MAP_SIDE};
+        const int MAZE_PER_MAP_SIDE{ 7 };
+        const int TOTAL_MAZES{ MAZE_PER_MAP_SIDE * MAZE_PER_MAP_SIDE };
         const int GLADE_INDEX = std::floor(TOTAL_MAZES * 0.5f);
-        const int LAYER_OF_MAZES{GLADE_INDEX / MAZE_PER_MAP_SIDE};
+        const int LAYER_OF_MAZES{ GLADE_INDEX / MAZE_PER_MAP_SIDE };
         std::cout << "LAYERS OF MAZES: " << LAYER_OF_MAZES << '\n'; // like a cinnamon roll
         std::cout << "GLADE_INDEX:     " << GLADE_INDEX << '\n';
         std::cout << "TOTAL_MAZES:     " << TOTAL_MAZES << '\n';
@@ -62,15 +62,15 @@ namespace MapGenerator
         };
 
         auto coordinate_calculator = [&](size_t index)
-        {
-            size_t colMaze = index % MAZE_PER_MAP_SIDE;
-            size_t rowMaze = index / MAZE_PER_MAP_SIDE;
+            {
+                size_t colMaze = index % MAZE_PER_MAP_SIDE;
+                size_t rowMaze = index / MAZE_PER_MAP_SIDE;
 
-            return Vector2{
-                .x = mazeStartPos.x + (colMaze * MAZE_SIDE_LENGTH),
-                .y = mazeStartPos.y + (rowMaze * MAZE_SIDE_LENGTH),
+                return Vector2{
+                    .x = mazeStartPos.x + (colMaze * MAZE_SIDE_LENGTH),
+                    .y = mazeStartPos.y + (rowMaze * MAZE_SIDE_LENGTH),
+                };
             };
-        };
 
         for (size_t i{}; i < TOTAL_MAZES; i++)
         {
@@ -83,6 +83,48 @@ namespace MapGenerator
         }
     }
 
+    static void _generate_glade()
+    {
+        MapBoundsVec4 mapBounds = get_map_limits();
+        const int gladeMin = -(GLADE_SIDE_LENGTH * 0.5f);
+        const int gladeMax = gladeMin + GLADE_SIDE_LENGTH;
+
+        for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)
+        {
+            for (int x = mapBounds.xMin; x < mapBounds.xMax; x++)
+            {
+                int y = z;
+
+                if (x >= gladeMin && x < gladeMax && y >= gladeMin && y < gladeMax)
+                {
+                    terrainMap[get_map_index(x, y)] = Map::GROUND_CUBE;
+
+                    // elevator in the middle of the glade
+                    if (x == 0 && y == 0)
+                    {
+                        terrainMap[get_map_index(x, y)] = Map::YELLOW_CUBE;
+                    }
+
+                    // glade surrounded by walls and doors
+                    if (x == gladeMin || x == gladeMax - 1 || y == gladeMin || y == gladeMax - 1)
+                    {
+                        terrainMap[get_map_index(x, y)] = Map::INGROWN_WALL_CUBE;
+
+                        if ((y == gladeMin || y == gladeMax - 1) && (x == -1 || x == 0))
+                        {
+                            terrainMap[get_map_index(x, y)] = Map::MAZE_NS_DOOR;
+                        }
+                        else if ((x == gladeMin || x == gladeMax - 1) && (y == -1 || y == 0))
+                        {
+                            terrainMap[get_map_index(x, y)] = Map::MAZE_WE_DOOR;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     void init()
     {
         std::cout << "MapGenerator init started..." << '\n';
@@ -92,12 +134,12 @@ namespace MapGenerator
         sector3Cutouts.clear();
         // SECTOR_3_REMOVE_EXTRA_THICKNESS.clear();
         voidPossibleLocations.clear();
-        generate_glade();
+        _generate_glade();
 
         // generate_ground();
         // generate_mazes();
 
-        generate_mazes_around();
+        _generate_mazes_around();
 
         // generate_cliffs();
         // generate_tunnels();
@@ -107,7 +149,7 @@ namespace MapGenerator
     void generate_ground()
     {
         MapBoundsVec4 mapBounds = get_map_limits();
-        float maxDistance = std::sqrt((MAP_SIDE_LENGTH_HALF) * (MAP_SIDE_LENGTH_HALF) + (MAP_SIDE_LENGTH_HALF) * (MAP_SIDE_LENGTH_HALF));
+        float maxDistance = std::sqrt((MAP_SIDE_LENGTH_HALF) * (MAP_SIDE_LENGTH_HALF)+(MAP_SIDE_LENGTH_HALF) * (MAP_SIDE_LENGTH_HALF));
         for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)
         {
             for (int x = mapBounds.xMin; x < mapBounds.xMax; x++)
@@ -187,7 +229,7 @@ namespace MapGenerator
                         // varsti saab neist sisse minna (❁´◡`❁)
                         if (sector % 2 != 0 && std::fabs(delta) < 0.15f && distance <= (MAP_SIDE_LENGTH * 0.5) && distance >= mazeOuterRadius)
                         {
-                            voidPossibleLocations.insert({y, x});
+                            voidPossibleLocations.insert({ y, x });
                         }
                     }
                     // walls between sector 1/2
@@ -234,36 +276,36 @@ namespace MapGenerator
         bool sector_1 = false, sector_2 = false, sector_3 = false;
 
         auto find_start_sectors = [&]() -> bool
-        {
-            const MapBoundsVec4 mapBounds = get_map_limits();
-            for (int i = mapBounds.zMin; i < mapBounds.zMax; i++)
             {
-                for (int j = mapBounds.xMin; j < mapBounds.xMax; j++)
+                const MapBoundsVec4 mapBounds = get_map_limits();
+                for (int i = mapBounds.zMin; i < mapBounds.zMax; i++)
                 {
-                    if (terrainMap[get_map_index(i, j)] == Map::SECTOR_1_WALL_VAL && sector_1 == false)
+                    for (int j = mapBounds.xMin; j < mapBounds.xMax; j++)
                     {
-                        std::cout << "Generating SECTION 1: Start grid: " << i << " " << j << "\n";
-                        Maze::generate_maze(terrainMap, i, j, "one");
-                        sector_1 = true;
+                        if (terrainMap[get_map_index(i, j)] == Map::SECTOR_1_WALL_VAL && sector_1 == false)
+                        {
+                            std::cout << "Generating SECTION 1: Start grid: " << i << " " << j << "\n";
+                            Maze::generate_maze(terrainMap, i, j, "one");
+                            sector_1 = true;
+                        }
+                        if (terrainMap[get_map_index(i, j)] == Map::SECTOR_2_WALL_VAL && sector_2 == false)
+                        {
+                            std::cout << "Generating SECTION 2: Start grid: " << i << " " << j << "\n";
+                            Maze::generate_maze(terrainMap, i, j, "two");
+                            sector_2 = true;
+                        }
+                        if (terrainMap[get_map_index(i, j)] == Map::SECTOR_3_WALL_VAL && sector_3 == false)
+                        {
+                            std::cout << "Generating SECTION 3: Start grid: " << i << " " << j << "\n";
+                            Maze::generate_maze(terrainMap, i, j, "three");
+                            sector_3 = true;
+                        }
+                        if (sector_1 == true && sector_2 == true && sector_3 == true)
+                            return true;
                     }
-                    if (terrainMap[get_map_index(i, j)] == Map::SECTOR_2_WALL_VAL && sector_2 == false)
-                    {
-                        std::cout << "Generating SECTION 2: Start grid: " << i << " " << j << "\n";
-                        Maze::generate_maze(terrainMap, i, j, "two");
-                        sector_2 = true;
-                    }
-                    if (terrainMap[get_map_index(i, j)] == Map::SECTOR_3_WALL_VAL && sector_3 == false)
-                    {
-                        std::cout << "Generating SECTION 3: Start grid: " << i << " " << j << "\n";
-                        Maze::generate_maze(terrainMap, i, j, "three");
-                        sector_3 = true;
-                    }
-                    if (sector_1 == true && sector_2 == true && sector_3 == true)
-                        return true;
                 }
-            }
-            return false;
-        };
+                return false;
+            };
 
         std::cout << "sector status: " << find_start_sectors() << "\n";
 
@@ -389,47 +431,6 @@ namespace MapGenerator
         }
     }
 
-    void generate_glade()
-    {
-        MapBoundsVec4 mapBounds = get_map_limits();
-        const int gladeMin = -(GLADE_SIDE_LENGTH * 0.5f);
-        const int gladeMax = gladeMin + GLADE_SIDE_LENGTH;
-
-        for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)
-        {
-            for (int x = mapBounds.xMin; x < mapBounds.xMax; x++)
-            {
-                int y = z;
-
-                if (x >= gladeMin && x < gladeMax && y >= gladeMin && y < gladeMax)
-                {
-                    terrainMap[get_map_index(x, y)] = Map::GROUND_CUBE;
-
-                    // elevator in the middle of the glade
-                    if (x == 0 && y == 0)
-                    {
-                        terrainMap[get_map_index(x, y)] = Map::YELLOW_CUBE;
-                    }
-
-                    // glade surrounded by walls and doors
-                    if (x == gladeMin || x == gladeMax - 1 || y == gladeMin || y == gladeMax - 1)
-                    {
-                        terrainMap[get_map_index(x, y)] = Map::INGROWN_WALL_CUBE;
-
-                        if ((y == gladeMin || y == gladeMax - 1) && (x == -1 || x == 0))
-                        {
-                            terrainMap[get_map_index(x, y)] = Map::MAZE_NS_DOOR;
-                        }
-                        else if ((x == gladeMin || x == gladeMax - 1) && (y == -1 || y == 0))
-                        {
-                            terrainMap[get_map_index(x, y)] = Map::MAZE_WE_DOOR;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     void generate_voids()
     {
         std::cout << "Possible void spawnpoints in set: " << voidPossibleLocations.size() << '\n';
@@ -438,7 +439,7 @@ namespace MapGenerator
         if (voidPossibleLocations.empty())
             std::cout << "Alert: No voids spawned! voidPossibleLocations.empty()";
 
-        std::mt19937 rng{std::random_device{}()};
+        std::mt19937 rng{ std::random_device{}() };
         std::uniform_int_distribution<size_t> dist(0, voidPossibleLocations.size() - 1);
 
         std::vector<std::pair<int, int>> locations(voidPossibleLocations.begin(), voidPossibleLocations.end());
@@ -522,7 +523,7 @@ namespace MapGenerator
                 int innerMin = ((MAP_SIDE_LENGTH - (2 * mazeOuterRadius)) / 2);
 
                 bool onCliffIntersection = ((x >= (MAP_SIDE_LENGTH * 0.5) - cliffWidthHalf && x <= (MAP_SIDE_LENGTH * 0.5) + cliffWidthHalf && (y == innerMin || y == innerMax)) ||
-                                            (y >= (MAP_SIDE_LENGTH * 0.5) - cliffWidthHalf && y <= (MAP_SIDE_LENGTH * 0.5) + cliffWidthHalf && (x == innerMin || x == innerMax)));
+                    (y >= (MAP_SIDE_LENGTH * 0.5) - cliffWidthHalf && y <= (MAP_SIDE_LENGTH * 0.5) + cliffWidthHalf && (x == innerMin || x == innerMax)));
 
                 if (!onCliffIntersection)
                     continue;
