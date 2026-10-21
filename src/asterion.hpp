@@ -20,16 +20,24 @@ struct Leg {
 };
 
 struct Walker {
-    Vector3 pos{ 0, 1, 0 }, vel{ 0, 0, 0 };
     float yaw = 0;
-    float speed = 3.0f, accel = 6.0f;
-    float l1 = 0.8f, l2 = 0.8f;
-    float stepDist = 0.6f, stepLead = 0.25f, stepSpeed = 6.0f, stepHeight = 0.35f;
+    float speed = 2.0f;
+    float accel = 1.0f;
+
+    float l1 = 0.8;
+    float l2 = 0.8f;
+    float stepDist = 1.5f;
+    float stepLead = 0.5f;
+    float stepSpeed = 3.f;
+    float stepHeight = 1.f;
+
+    float scale{ 1.0f };
+    float rideHeight = 1.0f;
+    float arriveDist = 0.5f;
+
     Leg legs[4];
     Model body, upper, lower;
-    float scale{ 6.7f };
-    float rideHeight = 1.1f;
-    float arriveDist = 0.5f;
+    Vector3 pos{ 0, 1, 0 }, vel{ 0, 0, 0 };
 
     void Init(const ModelAssets& models) {
         // init body parts
@@ -109,9 +117,6 @@ struct Walker {
             }
         }
 
-
-        // 3. Body rides on the feet
-        // pos.y = Lerp(pos.y, avgFootY + 1.1f, 1.0f - expf(-10.0f * dt));
         pos.y = Lerp(pos.y, avgFootY + rideHeight, 1.0f - expf(-10.0f * dt));
     }
 
@@ -141,10 +146,8 @@ struct Walker {
     void Draw() {
         if (!IsModelValid(body) || !IsModelValid(upper) || !IsModelValid(lower)) return;
         Matrix bm = BodyMatrix();
-        // body.transform = bm;
         body.transform = MatrixMultiply(MatrixScale(scale, scale, scale), bm);
-        DrawModel(body, Vector3Zero(), 1.0f, WHITE);
-
+        DrawModel(body, Vector3Zero(), 1.0f, GRAY);
         for (auto& l : legs) {
             Vector3 hip = Vector3Transform(l.hipLocal, bm);
             Vector3 foot = l.foot;

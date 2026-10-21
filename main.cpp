@@ -88,11 +88,6 @@ int main(void)
 
         BeginMode3D(camera);
         Scene::draw(models, &level, &camera, renderStop ? &sceneVector : nullptr);
-        auto dump = [](const char* n, const Model& m) {
-            TraceLog(LOG_INFO, "%s meshes=%d mats=%d meshMaterial=%p valid=%d",
-                n, m.meshCount, m.materialCount, (void*)m.meshMaterial, (int)IsModelValid(m));
-            };
-        dump("body", asterion1.body); dump("upper", asterion1.upper); dump("lower", asterion1.lower);
         asterion1.Draw();
 
         EndMode3D();

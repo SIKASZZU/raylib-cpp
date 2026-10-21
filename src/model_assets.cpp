@@ -13,7 +13,7 @@ ModelAssets LoadModelAssets()
     // asterion
     models.emplace(ModelId::AsterionLower, LoadModel("resources/asterion/griever_lower.obj"));
     models.emplace(ModelId::AsterionUpper, LoadModel("resources/asterion/griever_upper.obj"));
-    models.emplace(ModelId::AsterionBody, LoadModel("resources/asterion/griever_body.obj"));
+    models.emplace(ModelId::AsterionBody, LoadModel("resources/asterion/asterion_body_temp.obj"));
 
     return models;
 }
