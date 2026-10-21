@@ -24,25 +24,50 @@ int main(void)
     LevelInitialize(&level);
 
     Player player = {};
-    PlayerInitialize(&player, Vector3{0.0f, 0.0f, 0.0f});
+    PlayerInitialize(&player, Vector3{ 0.0f, 0.0f, 0.0f });
 
     CameraController cameraController = {};
     CameraControllerInitialize(&cameraController, player.position);
 
-    DisableCursor();
     SetTargetFPS(144);
 
+    // random init variables
+
+    // cursor
+    DisableCursor();
+    SetExitKey(KEY_Q);
+    bool cursorCaptured = false;
+
+    // player
     float physicsAccumulator = 0.0f;
     bool jumpQueued = false;
-    int showShadowMode = 0;
 
+    // scene render
+    int showShadowMode = 0;
     bool renderStop = false;
     SceneVector sceneVector;
 
     while (!WindowShouldClose())
     {
-        if (IsKeyPressed(KEY_F3))
+        if (!IsWindowFocused()) {
+            if (cursorCaptured) {
+                EnableCursor(); cursorCaptured = false;
+            }
+        }
+        else if (!cursorCaptured) {
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                DisableCursor();
+                cursorCaptured = true;
+            }
+        }
+        else if (IsKeyPressed(KEY_ESCAPE)) {
+            EnableCursor();
+            cursorCaptured = false;
+        }
+
+        if (IsKeyPressed(KEY_F3)) {
             showShadowMode = (showShadowMode + 1) % 3;
+        }
         float delta = GetFrameTime();
         CameraControllerApplyMouse(&cameraController, GetMouseDelta());
 
@@ -56,29 +81,33 @@ int main(void)
         while (physicsAccumulator >= PHYSICS_STEP)
         {
             PlayerUpdate(&player, &level, CameraControllerGetYaw(&cameraController),
-                         sideway, forward, jumpHolding, crouching, PHYSICS_STEP);
+                sideway, forward, jumpHolding, crouching, PHYSICS_STEP);
             jumpQueued = false;
             physicsAccumulator -= PHYSICS_STEP;
         }
 
         CameraControllerUpdate(&cameraController, player.position, player.isGrounded,
-                               sideway, forward, crouching, delta);
+            sideway, forward, crouching, delta);
         Camera camera = CameraControllerGetCamera(&cameraController);
 
         if (IsKeyPressed(KEY_F4))
         {
             renderStop = !renderStop;
             if (renderStop)
+            {
                 sceneVector = Scene::createSceneVector(&level, &camera);
+            }
             else
+            {
                 sceneVector.items.clear();
+            }
         }
 
         // DRAWING
 
         BeginDrawing();
 
-        ClearBackground(Color{SKY_R, SKY_G, SKY_B, 255});
+        ClearBackground(Color{ SKY_R, SKY_G, SKY_B, 255 });
 
         BeginMode3D(camera);
         Scene::draw(models, &level, &camera, renderStop ? &sceneVector : nullptr);
