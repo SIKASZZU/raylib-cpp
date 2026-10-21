@@ -30,13 +30,21 @@ int main(void)
     CameraController cameraController = {};
     CameraControllerInitialize(&cameraController, player.position);
 
-    DisableCursor();
     SetTargetFPS(144);
 
+    // random init variables
+
+    // cursor
+    DisableCursor();
+    SetExitKey(KEY_Q);
+    bool cursorCaptured = false;
+
+    // player
     float physicsAccumulator = 0.0f;
     bool jumpQueued = false;
-    int showShadowMode = 0;
 
+    // scene render
+    int showShadowMode = 0;
     bool renderStop = false;
     SceneVector sceneVector;
 
@@ -45,8 +53,25 @@ int main(void)
 
     while (!WindowShouldClose())
     {
-        if (IsKeyPressed(KEY_F3))
+        if (!IsWindowFocused()) {
+            if (cursorCaptured) {
+                EnableCursor(); cursorCaptured = false;
+            }
+        }
+        else if (!cursorCaptured) {
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                DisableCursor();
+                cursorCaptured = true;
+            }
+        }
+        else if (IsKeyPressed(KEY_ESCAPE)) {
+            EnableCursor();
+            cursorCaptured = false;
+        }
+
+        if (IsKeyPressed(KEY_F3)) {
             showShadowMode = (showShadowMode + 1) % 3;
+        }
         float delta = GetFrameTime();
         CameraControllerApplyMouse(&cameraController, GetMouseDelta());
 
@@ -73,9 +98,13 @@ int main(void)
         {
             renderStop = !renderStop;
             if (renderStop)
+            {
                 sceneVector = Scene::createSceneVector(&level, &camera);
+            }
             else
+            {
                 sceneVector.items.clear();
+            }
         }
 
         asterion1.Update(delta, player.position);
