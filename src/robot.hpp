@@ -46,7 +46,11 @@ struct Robot {
         return MatrixMultiply(MatrixRotateY(yaw), MatrixTranslate(pos.x, pos.y, pos.z));
     }
 
-    static float GroundY(float, float) { return 0.0f; }  // replace if terrain isn't flat
+    static float GroundY(float, float) {
+        // has to be some float point map eventually
+        // replace if terrain isn't flat
+        return 0.0f;
+    }
 
     static float AngleLerp(float a, float b, float t) {
         float d = fmodf(b - a + PI, 2 * PI);

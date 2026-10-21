@@ -151,7 +151,6 @@ int main(void)
 
     UnloadModelAssets(models);
     CloseWindow();
-    CloseWindow();
 
     return 0;
 }
