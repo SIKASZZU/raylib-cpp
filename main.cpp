@@ -9,7 +9,7 @@
 #include "src/player.hpp"
 #include "src/scene_renderer.hpp"
 #include "src/model_assets.hpp"
-#include "src/asterion.hpp"
+#include "src/robot.hpp"
 
 int main(void)
 {
@@ -48,8 +48,8 @@ int main(void)
     bool renderStop = false;
     SceneVector sceneVector;
 
-    Walker asterion1;
-    asterion1.Init(models);
+    Robot robot;
+    robot.Init(models);
 
     while (!WindowShouldClose())
     {
@@ -107,7 +107,7 @@ int main(void)
             }
         }
 
-        asterion1.Update(delta, player.position);
+        robot.Update(delta, player.position);
 
         // DRAWING
 
@@ -117,7 +117,7 @@ int main(void)
 
         BeginMode3D(camera);
         Scene::draw(models, &level, &camera, renderStop ? &sceneVector : nullptr);
-        asterion1.Draw();
+        robot.Draw();
 
         EndMode3D();
 

@@ -1,6 +1,6 @@
 # Blender 5.0.1
 # www.blender.org
-mtllib asterion_body_temp.mtl
+mtllib body_temp.mtl
 o Cube
 v -0.150000 -0.500000 1.000000
 v -0.300000 0.500000 1.000000

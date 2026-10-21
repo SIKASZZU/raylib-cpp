@@ -10,10 +10,10 @@ ModelAssets LoadModelAssets()
     models.emplace(ModelId::Ground, LoadModel("resources/ground/maze_ground.obj"));
     models.emplace(ModelId::Cube, LoadModel("resources/cube.obj"));
 
-    // asterion
-    models.emplace(ModelId::AsterionLower, LoadModel("resources/asterion/griever_lower.obj"));
-    models.emplace(ModelId::AsterionUpper, LoadModel("resources/asterion/griever_upper.obj"));
-    models.emplace(ModelId::AsterionBody, LoadModel("resources/asterion/asterion_body_temp.obj"));
+    // robot
+    models.emplace(ModelId::robotLower, LoadModel("resources/robot/lower.obj"));
+    models.emplace(ModelId::robotUpper, LoadModel("resources/robot/upper.obj"));
+    models.emplace(ModelId::robotBody, LoadModel("resources/robot/body_temp.obj"));
 
     return models;
 }
