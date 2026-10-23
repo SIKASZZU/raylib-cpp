@@ -9,8 +9,18 @@
 #include <source_location>
 
 #include "common.hpp"
-#include "game_config.hpp"
 #include "camera_controller.hpp"
+
+namespace MapConfig
+{
+    inline constexpr int SideLength{ 325 };
+    inline constexpr int HalfSideLength = SideLength * .5f;
+    inline constexpr int GladeSideLength{ 10 };
+    inline constexpr int MazeSideLength{ 10 };
+    inline constexpr float TileSize{ 25.0f };
+    inline constexpr float TileDiagonal{ TileSize * 0.7072f };
+    inline constexpr float ViewDistance{ 1500.0f };
+}
 
 struct MapBoundsVec4
 {
@@ -187,7 +197,7 @@ enum Map
 /// @brief Argument has to be a grid value of map
 /// @param gridValue int
 /// @return Returns the const char* equivalent of that value from enum Map
-inline constexpr const char *enumMapToString(int gridValue)
+inline constexpr const char* enumMapToString(int gridValue)
 {
     switch (gridValue)
     {
@@ -827,23 +837,23 @@ inline constexpr const char *enumMapToString(int gridValue)
 static std::unordered_set<int> wallValues = {
     Map::WALL_CUBE, Map::INGROWN_WALL_CUBE,
     Map::SECTOR_1_WALL_VAL, Map::SECTOR_2_WALL_VAL, Map::SECTOR_3_WALL_VAL,
-    Map::TUNNEL_WALL};
+    Map::TUNNEL_WALL };
 
 static const std::unordered_set<int> groundValues = {
-    Map::GROUND_CUBE, Map::TREE, Map::GRASS_COVER, Map::TREE_TRUNK};
+    Map::GROUND_CUBE, Map::TREE, Map::GRASS_COVER, Map::TREE_TRUNK };
 
 /* map */
 extern std::vector<int> terrainMap;
-std::set<std::pair<int, int>> &getS3PatchLocations();
+std::set<std::pair<int, int>>& getS3PatchLocations();
 extern std::unordered_set<uint32_t> sector3Cutouts;
 
 inline MapBoundsVec4 get_map_limits()
 {
     return {
-        .xMin = -MAP_SIDE_LENGTH_HALF,
-        .xMax = MAP_SIDE_LENGTH_HALF,
-        .zMin = -MAP_SIDE_LENGTH_HALF,
-        .zMax = MAP_SIDE_LENGTH_HALF,
+        .xMin = -MapConfig::HalfSideLength,
+        .xMax = MapConfig::HalfSideLength,
+        .zMin = -MapConfig::HalfSideLength,
+        .zMax = MapConfig::HalfSideLength,
     };
 }
 
@@ -873,13 +883,13 @@ inline size_t get_map_size()
     return size_t(b.xMax - b.xMin) * size_t(b.zMax - b.zMin);
 }
 
-inline MapBoundsVec4 get_map_limits_with_camera(const Camera *camera)
+inline MapBoundsVec4 get_map_limits_with_camera(const Camera* camera)
 {
     const MapBoundsVec4 m = get_map_limits();
-    const int camXMin = (int)floorf((camera->position.x - LIGHT_FAR) / LEVEL_TILE_DIAGONAL);
-    const int camXMax = (int)ceilf((camera->position.x + LIGHT_FAR) / LEVEL_TILE_DIAGONAL); //  + 1
-    const int camZMin = (int)floorf((camera->position.z - LIGHT_FAR) / LEVEL_TILE_DIAGONAL);
-    const int camZMax = (int)ceilf((camera->position.z + LIGHT_FAR) / LEVEL_TILE_DIAGONAL); //  + 1
+    const int camXMin = (int)floorf((camera->position.x - MapConfig::ViewDistance) / MapConfig::TileDiagonal);
+    const int camXMax = (int)ceilf((camera->position.x + MapConfig::ViewDistance) / MapConfig::TileDiagonal); //  + 1
+    const int camZMin = (int)floorf((camera->position.z - MapConfig::ViewDistance) / MapConfig::TileDiagonal);
+    const int camZMax = (int)ceilf((camera->position.z + MapConfig::ViewDistance) / MapConfig::TileDiagonal); //  + 1
 
     return {
         .xMin = std::max(m.xMin, camXMin),
@@ -909,6 +919,6 @@ namespace MapGenerator
     void generate_voids();
     void generate_cliffs();
     void generate_tunnels();
-    void generate_test(std::vector<int> &textureMap);
+    void generate_test(std::vector<int>& textureMap);
     void generate_s3_patches(int patchWidth = 5);
 }

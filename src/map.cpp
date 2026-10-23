@@ -10,9 +10,8 @@
 #include <raymath.h>
 #include "common.hpp"
 #include "maze.hpp"
-#include "game_config.hpp"
 
-std::vector<int> terrainMap((MAP_SIDE_LENGTH* MAP_SIDE_LENGTH), 0);
+std::vector<int> terrainMap((MapConfig::SideLength * MapConfig::SideLength), 0);
 std::unordered_set<uint32_t> sector3Cutouts;
 
 std::set<std::pair<int, int>>& getS3PatchLocations()
@@ -26,10 +25,10 @@ namespace MapGenerator
 
     /* variables for just map generation */
     std::set<std::pair<int, int>> voidPossibleLocations;
-    int GLADE_SIDE_LENGTH_HALF = GLADE_SIDE_LENGTH * 0.5f;
+    int GLADE_SIDE_LENGTH_HALF = MapConfig::GladeSideLength * 0.5f;
 
-    int mazeSize = MAP_SIDE_LENGTH_HALF - 4;
-    int halfMapSize = MAP_SIDE_LENGTH_HALF;
+    int mazeSize = MapConfig::HalfSideLength - 4;
+    int halfMapSize = MapConfig::HalfSideLength;
     int maxMazeSize = 130;
 
     int mazeInnerRadius = GLADE_SIDE_LENGTH_HALF + 1;
@@ -57,8 +56,8 @@ namespace MapGenerator
 
         // TODO: check if shit is in bounds ?? maybe this works: check_point_for_map_bounds
         const Vector2 mazeStartPos{
-            .x = (-GLADE_SIDE_LENGTH * 0.5f) - (MAZE_SIDE_LENGTH * (int(GLADE_INDEX / MAZE_PER_MAP_SIDE))),
-            .y = (-GLADE_SIDE_LENGTH * 0.5f) - (MAZE_SIDE_LENGTH * (int(GLADE_INDEX / MAZE_PER_MAP_SIDE))),
+            .x = (-MapConfig::GladeSideLength * 0.5f) - (MapConfig::MazeSideLength * (int(GLADE_INDEX / MAZE_PER_MAP_SIDE))),
+            .y = (-MapConfig::GladeSideLength * 0.5f) - (MapConfig::MazeSideLength * (int(GLADE_INDEX / MAZE_PER_MAP_SIDE))),
         };
 
         auto coordinate_calculator = [&](size_t index)
@@ -67,8 +66,8 @@ namespace MapGenerator
                 size_t rowMaze = index / MAZE_PER_MAP_SIDE;
 
                 return Vector2{
-                    .x = mazeStartPos.x + (colMaze * MAZE_SIDE_LENGTH),
-                    .y = mazeStartPos.y + (rowMaze * MAZE_SIDE_LENGTH),
+                    .x = mazeStartPos.x + (colMaze * MapConfig::MazeSideLength),
+                    .y = mazeStartPos.y + (rowMaze * MapConfig::MazeSideLength),
                 };
             };
 
@@ -79,15 +78,15 @@ namespace MapGenerator
                 continue;
             }
             Vector2 pos = coordinate_calculator(i);
-            Maze::generate_maze_placeholder(terrainMap, pos, MAZE_SIDE_LENGTH, MAZE_SIDE_LENGTH);
+            Maze::generate_maze_placeholder(terrainMap, pos, MapConfig::MazeSideLength, MapConfig::MazeSideLength);
         }
     }
 
     static void _generate_glade()
     {
         MapBoundsVec4 mapBounds = get_map_limits();
-        const int gladeMin = -(GLADE_SIDE_LENGTH * 0.5f);
-        const int gladeMax = gladeMin + GLADE_SIDE_LENGTH;
+        const int gladeMin = -(MapConfig::GladeSideLength * 0.5f);
+        const int gladeMax = gladeMin + MapConfig::GladeSideLength;
 
         for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)
         {
@@ -124,6 +123,21 @@ namespace MapGenerator
         }
     }
 
+    static void generate_test_map() {
+        const int mapLength{ 16 };
+        for (int z = -mapLength; z < mapLength; z++)
+        {
+            for (int x = -mapLength; x < mapLength; x++)
+            {
+                terrainMap[get_map_index(x, z)] = Map::GROUND_CUBE;
+                //square of walls
+                if ((x == 3 || x == -3 || z == 3 || z == -3) && (x < 4 && z < 4 && x > -4 && z > -4)) {
+                    terrainMap[get_map_index(x, z)] = Map::WALL_CUBE;
+                }
+            }
+        }
+    }
+
 
     void init()
     {
@@ -134,12 +148,14 @@ namespace MapGenerator
         sector3Cutouts.clear();
         // SECTOR_3_REMOVE_EXTRA_THICKNESS.clear();
         voidPossibleLocations.clear();
-        _generate_glade();
+
+        generate_test_map();
+        // _generate_glade();
 
         // generate_ground();
         // generate_mazes();
 
-        _generate_mazes_around();
+        // _generate_mazes_around();
 
         // generate_cliffs();
         // generate_tunnels();
@@ -149,7 +165,7 @@ namespace MapGenerator
     void generate_ground()
     {
         MapBoundsVec4 mapBounds = get_map_limits();
-        float maxDistance = std::sqrt((MAP_SIDE_LENGTH_HALF) * (MAP_SIDE_LENGTH_HALF)+(MAP_SIDE_LENGTH_HALF) * (MAP_SIDE_LENGTH_HALF));
+        float maxDistance = std::sqrt((MapConfig::HalfSideLength) * (MapConfig::HalfSideLength)+(MapConfig::HalfSideLength) * (MapConfig::HalfSideLength));
         for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)
         {
             for (int x = mapBounds.xMin; x < mapBounds.xMax; x++)
@@ -227,7 +243,7 @@ namespace MapGenerator
                         }
                         // metsades on portaalid O_O,
                         // varsti saab neist sisse minna (❁´◡`❁)
-                        if (sector % 2 != 0 && std::fabs(delta) < 0.15f && distance <= (MAP_SIDE_LENGTH * 0.5) && distance >= mazeOuterRadius)
+                        if (sector % 2 != 0 && std::fabs(delta) < 0.15f && distance <= (MapConfig::SideLength * 0.5) && distance >= mazeOuterRadius)
                         {
                             voidPossibleLocations.insert({ y, x });
                         }
@@ -264,7 +280,7 @@ namespace MapGenerator
                 // if (distance <= mazeOuterRadius
                 //     && dx > gladeRadius + 1
                 //     && dy > gladeRadius + 1) {
-                //     if (y == x || x == MAP_SIDE_LENGTH - y - 1) diagonalGrids.push_back(std::make_pair(y, x));
+                //     if (y == x || x == MapConfig::SideLength - y - 1) diagonalGrids.push_back(std::make_pair(y, x));
                 // }
             }
         }
@@ -464,14 +480,14 @@ namespace MapGenerator
         const int wallEnum = Map::INGROWN_WALL_CUBE;
         const int pathEnum = Map::SECTOR_3_PATHWAY;
 
-        for (int y = -MAP_SIDE_LENGTH; y < MAP_SIDE_LENGTH; y++)
+        for (int y = -MapConfig::SideLength; y < MapConfig::SideLength; y++)
         {
-            for (int x = -MAP_SIDE_LENGTH; x < MAP_SIDE_LENGTH; x++)
+            for (int x = -MapConfig::SideLength; x < MapConfig::SideLength; x++)
             {
-                int dx = std::abs(x - (MAP_SIDE_LENGTH * 0.5));
-                int dy = std::abs(y - (MAP_SIDE_LENGTH * 0.5));
+                int dx = std::abs(x - (MapConfig::SideLength * 0.5));
+                int dy = std::abs(y - (MapConfig::SideLength * 0.5));
                 int distance = std::sqrt(dx * dx + dy * dy);
-                if ((x == (MAP_SIDE_LENGTH * 0.5) || y == (MAP_SIDE_LENGTH * 0.5)) && distance >= mazeOuterRadius)
+                if ((x == (MapConfig::SideLength * 0.5) || y == (MapConfig::SideLength * 0.5)) && distance >= mazeOuterRadius)
                 {
                     // Widen the cliff
                     for (int i = -cliffWidthHalf; i <= cliffWidthHalf; i++)
@@ -480,31 +496,31 @@ namespace MapGenerator
                         int changeInto = pathEnum;
 
                         int tx = x, ty = y;
-                        if (x == (MAP_SIDE_LENGTH * 0.5))
+                        if (x == (MapConfig::SideLength * 0.5))
                             tx = x + i; // Vertical cliff, widen horizontally
-                        else if (y == (MAP_SIDE_LENGTH * 0.5))
+                        else if (y == (MapConfig::SideLength * 0.5))
                             ty = y + i; // Horizontal cliff, widen vertically
 
                         // cliff pathway
-                        if (tx >= 0 && tx < MAP_SIDE_LENGTH && ty >= 0 && ty < MAP_SIDE_LENGTH && changeInto != wallEnum)
+                        if (tx >= 0 && tx < MapConfig::SideLength && ty >= 0 && ty < MapConfig::SideLength && changeInto != wallEnum)
                         {
                             terrainMap[get_map_index(tx, ty)] = changeInto;
                         }
 
                         // below tx, ty are being modified!
                         // walls for cliff
-                        if ((i == -cliffWidthHalf || i == cliffWidthHalf) && x == (MAP_SIDE_LENGTH * 0.5))
+                        if ((i == -cliffWidthHalf || i == cliffWidthHalf) && x == (MapConfig::SideLength * 0.5))
                         {
                             tx += (i == -cliffWidthHalf) ? -1 : 0;
-                            if (tx >= 0 && tx < MAP_SIDE_LENGTH && ty >= 0 && ty < MAP_SIDE_LENGTH)
+                            if (tx >= 0 && tx < MapConfig::SideLength && ty >= 0 && ty < MapConfig::SideLength)
                             {
                                 terrainMap[get_map_index(tx, ty)] = wallEnum;
                             }
                         }
-                        else if ((i == -cliffWidthHalf || i == cliffWidthHalf) && y == (MAP_SIDE_LENGTH * 0.5))
+                        else if ((i == -cliffWidthHalf || i == cliffWidthHalf) && y == (MapConfig::SideLength * 0.5))
                         {
                             ty += (i == -cliffWidthHalf) ? -1 : 0;
-                            if (tx >= 0 && tx < MAP_SIDE_LENGTH && ty >= 0 && ty < MAP_SIDE_LENGTH)
+                            if (tx >= 0 && tx < MapConfig::SideLength && ty >= 0 && ty < MapConfig::SideLength)
                             {
                                 terrainMap[get_map_index(tx, ty)] = wallEnum;
                             }
@@ -515,24 +531,24 @@ namespace MapGenerator
         }
 
         // doors at mazeOuterRadius
-        for (int y = -MAP_SIDE_LENGTH; y < MAP_SIDE_LENGTH; y++)
+        for (int y = -MapConfig::SideLength; y < MapConfig::SideLength; y++)
         {
-            for (int x = -MAP_SIDE_LENGTH; x < MAP_SIDE_LENGTH; x++)
+            for (int x = -MapConfig::SideLength; x < MapConfig::SideLength; x++)
             {
-                int innerMax = 2 * mazeOuterRadius + ((MAP_SIDE_LENGTH - (2 * mazeOuterRadius)) / 2);
-                int innerMin = ((MAP_SIDE_LENGTH - (2 * mazeOuterRadius)) / 2);
+                int innerMax = 2 * mazeOuterRadius + ((MapConfig::SideLength - (2 * mazeOuterRadius)) / 2);
+                int innerMin = ((MapConfig::SideLength - (2 * mazeOuterRadius)) / 2);
 
-                bool onCliffIntersection = ((x >= (MAP_SIDE_LENGTH * 0.5) - cliffWidthHalf && x <= (MAP_SIDE_LENGTH * 0.5) + cliffWidthHalf && (y == innerMin || y == innerMax)) ||
-                    (y >= (MAP_SIDE_LENGTH * 0.5) - cliffWidthHalf && y <= (MAP_SIDE_LENGTH * 0.5) + cliffWidthHalf && (x == innerMin || x == innerMax)));
+                bool onCliffIntersection = ((x >= (MapConfig::SideLength * 0.5) - cliffWidthHalf && x <= (MapConfig::SideLength * 0.5) + cliffWidthHalf && (y == innerMin || y == innerMax)) ||
+                    (y >= (MapConfig::SideLength * 0.5) - cliffWidthHalf && y <= (MapConfig::SideLength * 0.5) + cliffWidthHalf && (x == innerMin || x == innerMax)));
 
                 if (!onCliffIntersection)
                     continue;
 
-                if (x == (MAP_SIDE_LENGTH * 0.5) || x + 1 == (MAP_SIDE_LENGTH * 0.5))
+                if (x == (MapConfig::SideLength * 0.5) || x + 1 == (MapConfig::SideLength * 0.5))
                 {
                     terrainMap[get_map_index(x, y)] = Map::MAZE_WE_DOOR;
                 }
-                else if (y == (MAP_SIDE_LENGTH * 0.5) || y + 1 == (MAP_SIDE_LENGTH * 0.5))
+                else if (y == (MapConfig::SideLength * 0.5) || y + 1 == (MapConfig::SideLength * 0.5))
                 {
                     terrainMap[get_map_index(x, y)] = Map::MAZE_NS_DOOR;
                 }
@@ -547,28 +563,28 @@ namespace MapGenerator
     void generate_tunnels()
     {
         const int innerMin = tunnelWidth - 1;
-        const int innerMax = MAP_SIDE_LENGTH - tunnelWidth;
+        const int innerMax = MapConfig::SideLength - tunnelWidth;
 
-        for (int y = -MAP_SIDE_LENGTH; y < MAP_SIDE_LENGTH; y++)
+        for (int y = -MapConfig::SideLength; y < MapConfig::SideLength; y++)
         {
-            for (int x = -MAP_SIDE_LENGTH; x < MAP_SIDE_LENGTH; x++)
+            for (int x = -MapConfig::SideLength; x < MapConfig::SideLength; x++)
             {
 
-                bool inTunnel = x < tunnelWidth || x >= MAP_SIDE_LENGTH - tunnelWidth || y < tunnelWidth || y >= MAP_SIDE_LENGTH - tunnelWidth;
+                bool inTunnel = x < tunnelWidth || x >= MapConfig::SideLength - tunnelWidth || y < tunnelWidth || y >= MapConfig::SideLength - tunnelWidth;
                 if (!inTunnel)
                     continue;
 
                 // exit on x == 0, y halfpoint, 3 tile wide
-                if (y == 0 && (x == (MAP_SIDE_LENGTH * 0.5) + 1 || x == (MAP_SIDE_LENGTH * 0.5) || x == (MAP_SIDE_LENGTH * 0.5) - 1))
+                if (y == 0 && (x == (MapConfig::SideLength * 0.5) + 1 || x == (MapConfig::SideLength * 0.5) || x == (MapConfig::SideLength * 0.5) - 1))
                 {
                     terrainMap[get_map_index(x, y)] = Map::EMPTY;
                     continue;
                 }
 
-                bool outerBorder = (x == 0 || y == 0 || x == MAP_SIDE_LENGTH - 1 || y == MAP_SIDE_LENGTH - 1);
-                bool innerWall = ((x == innerMin && (y >= tunnelWidth - 1 && y < MAP_SIDE_LENGTH - tunnelWidth + 1)) || (y == innerMin && (x >= tunnelWidth - 1 && x < MAP_SIDE_LENGTH - tunnelWidth + 1)) || (x == innerMax && (y >= tunnelWidth && y < MAP_SIDE_LENGTH - tunnelWidth + 1)) || (y == innerMax && (x >= tunnelWidth && x < MAP_SIDE_LENGTH - tunnelWidth + 1)));
+                bool outerBorder = (x == 0 || y == 0 || x == MapConfig::SideLength - 1 || y == MapConfig::SideLength - 1);
+                bool innerWall = ((x == innerMin && (y >= tunnelWidth - 1 && y < MapConfig::SideLength - tunnelWidth + 1)) || (y == innerMin && (x >= tunnelWidth - 1 && x < MapConfig::SideLength - tunnelWidth + 1)) || (x == innerMax && (y >= tunnelWidth && y < MapConfig::SideLength - tunnelWidth + 1)) || (y == innerMax && (x >= tunnelWidth && x < MapConfig::SideLength - tunnelWidth + 1)));
 
-                bool onCliffIntersection = (((x >= (MAP_SIDE_LENGTH * 0.5) - cliffWidthHalf && x <= (MAP_SIDE_LENGTH * 0.5) + cliffWidthHalf && (y == innerMin || y == innerMax)) || (y >= (MAP_SIDE_LENGTH * 0.5) - cliffWidthHalf && y <= (MAP_SIDE_LENGTH * 0.5) + cliffWidthHalf && (x == innerMin || x == innerMax))));
+                bool onCliffIntersection = (((x >= (MapConfig::SideLength * 0.5) - cliffWidthHalf && x <= (MapConfig::SideLength * 0.5) + cliffWidthHalf && (y == innerMin || y == innerMax)) || (y >= (MapConfig::SideLength * 0.5) - cliffWidthHalf && y <= (MapConfig::SideLength * 0.5) + cliffWidthHalf && (x == innerMin || x == innerMax))));
 
                 int changeInto = Map::TUNNEL_PATHWAY;
                 if (innerWall)
@@ -576,11 +592,11 @@ namespace MapGenerator
                 if (onCliffIntersection)
                 {
 
-                    if (x == (MAP_SIDE_LENGTH * 0.5) || x + 1 == (MAP_SIDE_LENGTH * 0.5))
+                    if (x == (MapConfig::SideLength * 0.5) || x + 1 == (MapConfig::SideLength * 0.5))
                     {
                         changeInto = Map::MAZE_WE_DOOR;
                     }
-                    if (y == (MAP_SIDE_LENGTH * 0.5) || y + 1 == (MAP_SIDE_LENGTH * 0.5))
+                    if (y == (MapConfig::SideLength * 0.5) || y + 1 == (MapConfig::SideLength * 0.5))
                     {
                         changeInto = Map::MAZE_NS_DOOR;
                     }

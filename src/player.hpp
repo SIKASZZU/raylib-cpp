@@ -4,6 +4,15 @@
 #include "raylib.h"
 #include "level.hpp"
 
+namespace PlayerDimensions
+{
+inline constexpr float StandHeight = 1.0f;
+inline constexpr float BottomHeight = 0.5f;
+inline constexpr float Radius = 0.5f;
+inline constexpr float CrouchHeight = 0.0f;
+inline constexpr float Height = BottomHeight + StandHeight;
+}
+
 typedef struct
 {
     Vector3 position;

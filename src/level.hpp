@@ -5,6 +5,13 @@
 
 #include <vector>
 
+namespace WallGeometry
+{
+inline constexpr float HalfLength = 12.5f;
+inline constexpr float HalfThickness = 14.5f;
+inline constexpr float Height = 35.45f;
+}
+
 struct WallInstance
 {
     Vector3 position;

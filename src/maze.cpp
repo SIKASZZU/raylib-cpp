@@ -18,20 +18,20 @@ namespace Maze
     // Directions: up, down, left, right
     // All directions must use the SAME step size so the DFS grid nodes align.
     std::vector<std::pair<int, int>> directions_sec_3 = {
-        {-4, 0}, {4, 0}, {0, -4}, {0, 4}};
+        { -4, 0 },{ 4, 0 },{ 0, -4 },{ 0, 4 } };
 
     // FIX: was {-4,0},{2,0},{0,-4},{0,2} — asymmetric steps meant the grid
     // nodes never shared the same lattice, creating disconnected islands.
     std::vector<std::pair<int, int>> directions_sec_2 = {
-        {-4, 0}, {4, 0}, {0, -4}, {0, 4}};
+        { -4, 0 },{ 4, 0 },{ 0, -4 },{ 0, 4 } };
 
     std::vector<std::pair<int, int>> directions_sec_1 = {
-        {-3, 0}, {3, 0}, {0, -3}, {0, 3}};
+        { -3, 0 },{ 3, 0 },{ 0, -3 },{ 0, 3 } };
 
     std::vector<std::pair<int, int>> path;
     int pathway = Map::ERROR_CUBE;
 
-    void shuffle_directions(std::vector<std::pair<int, int>> &directions)
+    void shuffle_directions(std::vector<std::pair<int, int>>& directions)
     {
         static std::random_device rd;
         static std::mt19937 g(rd());
@@ -40,28 +40,27 @@ namespace Maze
 
     // this is a placeholder method just to visualize mazes
     // Generate area where a maze could be generated onto
-    void generate_maze_placeholder(std::vector<int> &terrainMap, Vector2 startGrid, size_t width, size_t height)
+    void generate_maze_placeholder(std::vector<int>& terrainMap, Vector2 startGrid, size_t width, size_t height)
     {
-        if (!check_point_for_map_bounds(startGrid.x, startGrid.y) || !check_point_for_map_bounds(startGrid.x + MAZE_SIDE_LENGTH, startGrid.y + MAZE_SIDE_LENGTH))
+        if (!check_point_for_map_bounds(startGrid.x, startGrid.y) || !check_point_for_map_bounds(startGrid.x + MapConfig::MazeSideLength, startGrid.y + MapConfig::MazeSideLength))
         {
             std::cout << "we went outside the map" << '\n';
             return;
         }
 
-        const int MAZE_SIDE_LENGTH_HALF = MAZE_SIDE_LENGTH * 0.5f;
-
-        for (size_t x{}; x < MAZE_SIDE_LENGTH; x++)
+        const int mazeSideLengthHalf = MapConfig::MazeSideLength * 0.5f;
+        for (size_t x{}; x < MapConfig::MazeSideLength; x++)
         {
-            for (size_t z{}; z < MAZE_SIDE_LENGTH; z++)
+            for (size_t z{}; z < MapConfig::MazeSideLength; z++)
             {
-                if (x == 0 || x == MAZE_SIDE_LENGTH - 1 || z == 0 || z == MAZE_SIDE_LENGTH - 1)
+                if (x == 0 || x == MapConfig::MazeSideLength - 1 || z == 0 || z == MapConfig::MazeSideLength - 1)
                 {
                     terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::WALL_CUBE;
-                    if (x == MAZE_SIDE_LENGTH_HALF || x == MAZE_SIDE_LENGTH_HALF - 1)
+                    if (x == mazeSideLengthHalf || x == mazeSideLengthHalf - 1)
                     {
                         terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::MAZE_NS_DOOR;
                     }
-                    else if (z == MAZE_SIDE_LENGTH_HALF || z == MAZE_SIDE_LENGTH_HALF - 1)
+                    else if (z == mazeSideLengthHalf || z == mazeSideLengthHalf - 1)
                     {
                         terrainMap[get_map_index(startGrid.x + x, startGrid.y + z)] = Map::MAZE_WE_DOOR;
                     }
@@ -75,7 +74,7 @@ namespace Maze
     }
 
     // Recursive maze generation using DFS
-    void generate_maze(std::vector<int> &terrainMap, int start_row, int start_col, std::string type)
+    void generate_maze(std::vector<int>& terrainMap, int start_row, int start_col, std::string type)
     {
         std::vector<std::pair<int, int>> directions;
         int allowed_number;
@@ -102,7 +101,7 @@ namespace Maze
         shuffle_directions(directions);
         const MapBoundsVec4 mapBounds = get_map_limits();
 
-        for (const auto &dir : directions)
+        for (const auto& dir : directions)
         {
             int nx = start_col + dir.first;
             int ny = start_row + dir.second;
@@ -191,7 +190,7 @@ namespace Maze
     // The exits are aligned to cardinal directions (0, π/2, π, 3π/2) by default,
     // which matches the existing sector-1 pathway corridors from generate_ground.
     void punch_sector_exits(
-        std::vector<int> &terrainMap,
+        std::vector<int>& terrainMap,
         int halfMAP_SIDE_LENGTH,
         int ringRadius,
         int innerPath,
@@ -260,7 +259,7 @@ namespace Maze
     }
 
     // A* Pathfinding from (sx, sy) to (gx, gy) with 8-way movement
-    bool find_path(const std::vector<int> &terrainMap, int sx, int sy, int gx, int gy)
+    bool find_path(const std::vector<int>& terrainMap, int sx, int sy, int gx, int gy)
     {
         path.clear();
 
@@ -268,26 +267,26 @@ namespace Maze
         std::unordered_map<pii, pii, pair_hash> came_from;
 
         const double INF = 1e12;
-        static double g_score[MAP_SIDE_LENGTH][MAP_SIDE_LENGTH];
-        for (int y = 0; y < MAP_SIDE_LENGTH; ++y)
-            for (int x = 0; x < MAP_SIDE_LENGTH; ++x)
+        static double g_score[MapConfig::SideLength][MapConfig::SideLength];
+        for (int y = 0; y < MapConfig::SideLength; ++y)
+            for (int x = 0; x < MapConfig::SideLength; ++x)
                 g_score[y][x] = INF;
 
         auto heuristic = [&](int x, int y)
-        {
-            double dx = double(gx - x);
-            double dy = double(gy - y);
-            return std::sqrt(dx * dx + dy * dy);
-        };
+            {
+                double dx = double(gx - x);
+                double dy = double(gy - y);
+                return std::sqrt(dx * dx + dy * dy);
+            };
 
-        int dxs[8] = {-1, 1, 0, 0, -1, -1, 1, 1};
-        int dys[8] = {0, 0, -1, 1, -1, 1, -1, 1};
+        int dxs[8] = { -1, 1, 0, 0, -1, -1, 1, 1 };
+        int dys[8] = { 0, 0, -1, 1, -1, 1, -1, 1 };
 
         using PQElem = std::pair<double, pii>;
         std::priority_queue<PQElem, std::vector<PQElem>, std::greater<PQElem>> open;
 
         g_score[sy][sx] = 0.0;
-        open.push({heuristic(sx, sy), {sx, sy}});
+        open.push({ heuristic(sx, sy),{ sx, sy } });
 
         while (!open.empty())
         {
@@ -297,13 +296,13 @@ namespace Maze
 
             if (x == gx && y == gy)
             {
-                pii curr = {gx, gy};
+                pii curr = { gx, gy };
                 while (!(curr.first == sx && curr.second == sy))
                 {
                     path.push_back(curr);
                     curr = came_from[curr];
                 }
-                path.push_back({sx, sy});
+                path.push_back({ sx, sy });
                 std::reverse(path.begin(), path.end());
                 return true;
             }
@@ -312,7 +311,7 @@ namespace Maze
             {
                 int nx = x + dxs[i];
                 int ny = y + dys[i];
-                if (nx < 0 || ny < 0 || nx >= MAP_SIDE_LENGTH || ny >= MAP_SIDE_LENGTH)
+                if (nx < 0 || ny < 0 || nx >= MapConfig::SideLength || ny >= MapConfig::SideLength)
                     continue;
                 if (!is_walkable(terrainMap[get_map_index(ny, nx)]))
                     continue;
@@ -322,9 +321,9 @@ namespace Maze
 
                 if (tentative_g < g_score[ny][nx])
                 {
-                    came_from[{nx, ny}] = {x, y};
+                    came_from[{nx, ny}] = { x, y };
                     g_score[ny][nx] = tentative_g;
-                    open.push({tentative_g + heuristic(nx, ny), {nx, ny}});
+                    open.push({ tentative_g + heuristic(nx, ny),{ nx, ny } });
                 }
             }
         }

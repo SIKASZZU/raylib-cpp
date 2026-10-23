@@ -1,6 +1,6 @@
 #include "camera_controller.hpp"
 
-#include "game_config.hpp"
+#include "player.hpp"
 #include "raymath.h"
 
 #include <math.h>
@@ -11,12 +11,12 @@ static float GetFrameLerpFactor(float rate, float delta);
 void CameraControllerInitialize(CameraController *controller, Vector3 playerPosition)
 {
     *controller = {};
-    controller->headLerp = STAND_HEIGHT;
+    controller->headLerp = PlayerDimensions::StandHeight;
     controller->camera.fovy = 60.0f;
     controller->camera.projection = CAMERA_PERSPECTIVE;
     controller->camera.position = {
         playerPosition.x,
-        playerPosition.y + BOTTOM_HEIGHT + controller->headLerp,
+        playerPosition.y + PlayerDimensions::BottomHeight + controller->headLerp,
         playerPosition.z,
     };
     CameraControllerUpdate(controller, playerPosition, false, 0, 0, false, 0.0f);
@@ -31,11 +31,11 @@ void CameraControllerApplyMouse(CameraController *controller, Vector2 mouseDelta
 void CameraControllerUpdate(CameraController *controller, Vector3 playerPosition, bool isGrounded, char side, char forward, bool crouching, float delta)
 {
     controller->headLerp = Lerp(controller->headLerp,
-                                crouching ? CROUCH_HEIGHT : STAND_HEIGHT,
+                                crouching ? PlayerDimensions::CrouchHeight : PlayerDimensions::StandHeight,
                                 GetFrameLerpFactor(20.0f, delta));
     controller->camera.position = {
         playerPosition.x,
-        playerPosition.y + BOTTOM_HEIGHT + controller->headLerp,
+        playerPosition.y + PlayerDimensions::BottomHeight + controller->headLerp,
         playerPosition.z,
     };
 

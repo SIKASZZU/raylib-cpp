@@ -1,6 +1,5 @@
 
 #include "level.hpp"
-#include "game_config.hpp"
 #include "map.hpp"
 
 static bool IsWallTile(int tile)
@@ -45,8 +44,8 @@ void LevelInitialize(Level* level)
                 tile == Map::VOID_CUBE_NEIGHBOUR || tile == Map::INVISIBLE_CUBE)
                 continue;
 
-            const float worldX = x * LEVEL_TILE_SIZE;
-            const float worldZ = z * LEVEL_TILE_SIZE;
+            const float worldX = x * MapConfig::TileSize;
+            const float worldZ = z * MapConfig::TileSize;
 
             if (!IsWallTile(tile))
                 continue;
@@ -55,15 +54,15 @@ void LevelInitialize(Level* level)
             wall.position = { worldX, 0.0f, worldZ };
             level->wallIndexByTile[tileIndex] = static_cast<int>(level->walls.size());
 
-            const bool wallWest = x > mapBounds.xMin && IsWallTile(terrainMap[get_map_index(x - 1, z)]);
-            const bool wallEast = x + 1 < mapBounds.xMax && IsWallTile(terrainMap[get_map_index(x + 1, z)]);
-            const bool wallNorth = z > mapBounds.zMin && IsWallTile(terrainMap[get_map_index(x, z - 1)]);
-            const bool wallSouth = z + 1 < mapBounds.zMax && IsWallTile(terrainMap[get_map_index(x, z + 1)]);
+            // const bool wallWest = x > mapBounds.xMin && IsWallTile(terrainMap[get_map_index(x - 1, z)]);
+            // const bool wallEast = x + 1 < mapBounds.xMax && IsWallTile(terrainMap[get_map_index(x + 1, z)]);
+            // const bool wallNorth = z > mapBounds.zMin && IsWallTile(terrainMap[get_map_index(x, z - 1)]);
+            // const bool wallSouth = z + 1 < mapBounds.zMax && IsWallTile(terrainMap[get_map_index(x, z + 1)]);
 
             // always have the large face of wall towards random stuff thats not walls.
-            if (!wallEast || !wallWest) {
-                wall.rotationDegrees = 90.0f;
-            }
+            // if (!wallEast || !wallWest) {
+            //     wall.rotationDegrees = 90.0f;
+            // }
 
             level->walls.push_back(wall);
         }

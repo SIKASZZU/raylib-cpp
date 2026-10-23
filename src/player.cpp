@@ -1,9 +1,18 @@
 #include "player.hpp"
 
-#include "game_config.hpp"
 #include "raymath.h"
 
 #include <math.h>
+
+namespace
+{
+constexpr float Gravity = 32.0f;
+constexpr float MaxSpeed = 200.0f;
+constexpr float MaxAcceleration = 2000.0f;
+constexpr float GroundFriction = 0.86f;
+constexpr float AirDrag = 0.98f;
+constexpr float Control = 15.0f;
+}
 
 static bool CheckCollision(Vector3 position, const Level *level);
 static bool CheckAgainstWall(Vector3 position, const WallInstance &wall);
@@ -21,11 +30,10 @@ void PlayerUpdate(Player *player, const Level *level, float rotation, char side,
         input = Vector2Normalize(input);
 
     // if (!player->isGrounded)
-    //     player->velocity.y -= GRAVITY * delta;
+    //     player->velocity.y -= Gravity * delta;
 
     // if (player->isGrounded && jumpPressed)
     // {
-    //     player->velocity.y = JUMP_FORCE;
     //     player->isGrounded = false;
     // }
 
@@ -36,18 +44,17 @@ void PlayerUpdate(Player *player, const Level *level, float rotation, char side,
         0.0f,
         input.x * right.z + input.y * front.z,
     };
-    float controlFactor = 1.0f - powf(1.0f - CONTROL / 60.0f, delta * 60.0f);
+    float controlFactor = 1.0f - powf(1.0f - Control / 60.0f, delta * 60.0f);
     player->direction = Vector3Lerp(player->direction, desiredDirection, controlFactor);
 
-    float decel = powf(player->isGrounded ? FRICTION : AIR_DRAG, delta * 60.0f);
+    float decel = powf(player->isGrounded ? GroundFriction : AirDrag, delta * 60.0f);
     Vector3 horizontalVelocity = {player->velocity.x * decel, 0.0f, player->velocity.z * decel};
-    if (Vector3Length(horizontalVelocity) < MAX_SPEED * 0.01f)
+    if (Vector3Length(horizontalVelocity) < MaxSpeed * 0.01f)
         horizontalVelocity = {};
 
     float speed = Vector3DotProduct(horizontalVelocity, player->direction);
-    float maxSpeed = crouchHold ? CROUCH_SPEED : MAX_SPEED;
-    maxSpeed = MAX_SPEED; // TODO: remove these lines if remove god mode
-    float acceleration = Clamp(maxSpeed - speed, 0.0f, MAX_ACCEL * delta);
+    float maxSpeed = MaxSpeed; // TODO: remove this line if remove god mode
+    float acceleration = Clamp(maxSpeed - speed, 0.0f, MaxAcceleration * delta);
     horizontalVelocity.x += player->direction.x * acceleration;
     horizontalVelocity.z += player->direction.z * acceleration;
 
@@ -60,11 +67,11 @@ void PlayerUpdate(Player *player, const Level *level, float rotation, char side,
 
     // TODO: remove these lines if remove god mode
     if (jumpPressed) {
-        player->position.y += acceleration / GRAVITY;
+        player->position.y += acceleration / Gravity;
     }
     // TODO: remove these lines if remove god mode
     if (crouchHold) {
-        player->position.y -= acceleration / GRAVITY;
+        player->position.y -= acceleration / Gravity;
     }
 
     // Vector3 nextPosition = player->position;
@@ -89,15 +96,15 @@ void PlayerUpdate(Player *player, const Level *level, float rotation, char side,
     // }
 
     // Vector2 horizontalClamped = {player->velocity.x, player->velocity.z};
-    // if (Vector2Length(horizontalClamped) > MAX_SPEED)
+    // if (Vector2Length(horizontalClamped) > MaxSpeed)
     // {
-    //     horizontalClamped = Vector2Scale(Vector2Normalize(horizontalClamped), MAX_SPEED);
+    //     horizontalClamped = Vector2Scale(Vector2Normalize(horizontalClamped), MaxSpeed);
     //     player->velocity.x = horizontalClamped.x;
     //     player->velocity.z = horizontalClamped.y;
     // }
 
-    if (Vector3Length(player->velocity) > MAX_SPEED)
-        player->velocity = Vector3Scale(Vector3Normalize(player->velocity), MAX_SPEED);
+    if (Vector3Length(player->velocity) > MaxSpeed)
+        player->velocity = Vector3Scale(Vector3Normalize(player->velocity), MaxSpeed);
 }
 
 float PlayerGetHorizontalSpeed(const Player *player)
@@ -118,12 +125,12 @@ static bool CheckCollision(Vector3 position, const Level *level)
 
 static bool CheckAgainstWall(Vector3 position, const WallInstance &wall)
 {
-    const float height = WALL_HEIGHT;
-    const float halfLength = WALL_HALF_LENGTH;
-    const float halfThickness = WALL_HALF_THICKNESS;
+    const float height = WallGeometry::Height;
+    const float halfLength = WallGeometry::HalfLength;
+    const float halfThickness = WallGeometry::HalfThickness;
     const float rotation = wall.rotationDegrees * DEG2RAD;
 
-    if (position.y > wall.position.y + height || position.y + PLAYER_HEIGHT < wall.position.y)
+    if (position.y > wall.position.y + height || position.y + PlayerDimensions::Height < wall.position.y)
         return false;
 
     float cosRotation = cosf(rotation);
@@ -136,5 +143,5 @@ static bool CheckAgainstWall(Vector3 position, const WallInstance &wall)
     float closestZ = Clamp(localZ, -halfThickness, halfThickness);
     float deltaX = localX - closestX;
     float deltaZ = localZ - closestZ;
-    return deltaX * deltaX + deltaZ * deltaZ <= PLAYER_RADIUS * PLAYER_RADIUS;
+    return deltaX * deltaX + deltaZ * deltaZ <= PlayerDimensions::Radius * PlayerDimensions::Radius;
 }

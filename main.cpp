@@ -4,21 +4,31 @@
 #include <iostream>
 
 #include "src/camera_controller.hpp"
-#include "src/game_config.hpp"
 #include "src/level.hpp"
 #include "src/player.hpp"
 #include "src/scene_renderer.hpp"
 #include "src/model_assets.hpp"
+#include "src/map.hpp"
 
 int main(void)
 {
+    constexpr float physicsStep = 1.0f / 120.0f;
+    constexpr Color skyColor{ 190, 205, 225, 255 };
     const int screenWidth = 1440;
     const int screenHeight = 900;
 
     InitWindow(screenWidth, screenHeight, "raylib");
-    rlSetClipPlanes(LIGHT_NEAR, LIGHT_FAR);
+    rlSetClipPlanes(SceneSettings::NearClipPlane, SceneSettings::FarClipPlane);
 
     ModelAssets models = LoadModelAssets();
+
+    const float wallScale = GetScaleToFitGround(models.at(ModelId::Wall));
+    const float groundScale = GetScaleToFitGround(models.at(ModelId::Ground));
+    const float cubeScale = GetScaleToFitGround(models.at(ModelId::Cube));
+
+    std::cout << "wallScale: " << wallScale << '\n';
+    std::cout << "groundScale: " << groundScale << '\n';
+    std::cout << "cubeScale: " << cubeScale << '\n';
 
     Level level = {};
     LevelInitialize(&level);
@@ -78,12 +88,12 @@ int main(void)
         physicsAccumulator += delta;
         jumpQueued = jumpQueued || IsKeyPressed(KEY_SPACE);
         bool jumpHolding = IsKeyDown(KEY_SPACE); // TODO: remove these lines if remove god mode
-        while (physicsAccumulator >= PHYSICS_STEP)
+        while (physicsAccumulator >= physicsStep)
         {
             PlayerUpdate(&player, &level, CameraControllerGetYaw(&cameraController),
-                sideway, forward, jumpHolding, crouching, PHYSICS_STEP);
+                sideway, forward, jumpHolding, crouching, physicsStep);
             jumpQueued = false;
-            physicsAccumulator -= PHYSICS_STEP;
+            physicsAccumulator -= physicsStep;
         }
 
         CameraControllerUpdate(&cameraController, player.position, player.isGrounded,
@@ -107,7 +117,7 @@ int main(void)
 
         BeginDrawing();
 
-        ClearBackground(Color{ SKY_R, SKY_G, SKY_B, 255 });
+        ClearBackground(skyColor);
 
         BeginMode3D(camera);
         Scene::draw(models, &level, &camera, renderStop ? &sceneVector : nullptr);
@@ -133,7 +143,7 @@ int main(void)
 
         // ON-SCREEN TOP-RIGHT
         DrawText(TextFormat("- xyz: %7.2f %7.2f %7.2f", player.position.x, player.position.y, player.position.z), screenWidth - 350, 0, 20, textColor); // player pos
-        DrawText(TextFormat("-grid: %4.0f %4.0f %4.0f", player.position.x / LEVEL_TILE_SIZE, player.position.y / LEVEL_TILE_SIZE, player.position.z / LEVEL_TILE_SIZE), screenWidth - 350, 20, 30, textColor); // player pos
+        DrawText(TextFormat("-grid: %4.0f %4.0f %4.0f", player.position.x / MapConfig::TileSize, player.position.y / MapConfig::TileSize, player.position.z / MapConfig::TileSize), screenWidth - 350, 20, 30, textColor); // player pos
 
         // ON-SCREEN BOTTOM-LEFT
         DrawFPS(10, screenHeight - 20); // fps

@@ -6,6 +6,12 @@
 
 #include <vector>
 
+namespace SceneSettings
+{
+inline constexpr float NearClipPlane = 1.0f;
+inline constexpr float FarClipPlane = MapConfig::ViewDistance;
+}
+
 struct SceneItem
 {
     int mapTileId;

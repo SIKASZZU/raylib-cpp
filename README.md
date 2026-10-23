@@ -36,10 +36,11 @@ gdb -batch -ex run -ex bt ./main
 - `src/shader_system.*`: lighting shader and shadow-map setup
 - `resources/shaders/`: GLSL shader sources
 
-Wall dimensions are configured in `src/game_config.hpp`. The renderer fits the
-wall model's local-space bounds to those dimensions, and player collision and
-frustum culling use the same configured dimensions. Change `WALL_HALF_LENGTH`,
-`WALL_HALF_THICKNESS`, or `WALL_HEIGHT` there to resize walls without separately
-adjusting collision. Walls are stored as `WallInstance` values in
+Map dimensions and tile spacing live with the map implementation in
+`src/map.hpp`. Wall collision and culling extents are grouped with
+`WallInstance` in `src/level.hpp`; despite the old configuration name,
+`WallGeometry::Height` is used for player collision and renderer culling, not
+to scale the rendered mesh. The render scale is defined locally in
+`src/scene_renderer.cpp`. Walls are stored as `WallInstance` values in
 `Level::walls`; their position and rotation are shared by rendering and
 collision.

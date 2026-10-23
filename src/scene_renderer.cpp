@@ -2,10 +2,15 @@
 #include <algorithm>
 
 #include "scene_renderer.hpp"
-#include "game_config.hpp"
 #include "map.hpp"
 
 #include <raymath.h>
+
+namespace
+{
+    constexpr float GroundModelScale = MapConfig::TileSize / 12.04f;
+    constexpr float WallModelScale = MapConfig::TileSize / 14.5f;
+}
 
 // temp method
 static bool IsWallTile(int tile)
@@ -54,9 +59,9 @@ static bool SphereVisible(const ViewFrustum& f, Vector3 center, float radius)
     const Vector3 o = Vector3Subtract(center, f.pos);
     const float depth = Vector3DotProduct(o, f.fwd);
 
-    if (depth + radius < LIGHT_NEAR)
+    if (depth + radius < SceneSettings::NearClipPlane)
         return false;
-    if (depth - radius > LIGHT_FAR)
+    if (depth - radius > SceneSettings::FarClipPlane)
         return false;
 
     const float h = fabsf(Vector3DotProduct(o, f.right));
@@ -75,19 +80,19 @@ static WallBounds MakeWallBounds(const WallInstance& w)
 {
     // Walls are rotated in 90 degree steps, so swapping x/z keeps the AABB exact.
     const bool swapped = fabsf(fmodf(w.rotationDegrees, 180.0f)) > 45.0f;
-    const float hx = swapped ? WALL_HALF_THICKNESS : WALL_HALF_LENGTH;
-    const float hz = swapped ? WALL_HALF_LENGTH : WALL_HALF_THICKNESS;
+    const float hx = swapped ? WallGeometry::HalfThickness : WallGeometry::HalfLength;
+    const float hz = swapped ? WallGeometry::HalfLength : WallGeometry::HalfThickness;
 
     // Joints stick out of the body: 1.37 vs 1.2 in thickness, 0.175 below/above in height (model units).
     const float joint = 1.37f / 1.2f;
     const float vx = swapped ? hx * joint : hx;
     const float vz = swapped ? hz : hz * joint;
-    const float vy = 0.175f * WALL_MODEL_SCALE;
+    const float vy = 0.175f * WallModelScale;
 
     const Vector3 p = w.position;
     WallBounds b;
-    b.occluder = { { p.x - hx, p.y, p.z - hz },{ p.x + hx, p.y + WALL_HEIGHT, p.z + hz } };
-    b.visual = { { p.x - vx, p.y - vy, p.z - vz },{ p.x + vx, p.y + WALL_HEIGHT + vy, p.z + vz } };
+    b.occluder = { { p.x - hx, p.y, p.z - hz },{ p.x + hx, p.y + WallGeometry::Height, p.z + hz } };
+    b.visual = { { p.x - vx, p.y - vy, p.z - vz },{ p.x + vx, p.y + WallGeometry::Height + vy, p.z + vz } };
     return b;
 }
 
@@ -127,7 +132,7 @@ static SceneVector _createSceneVector(const Level* level, const Camera* camera)
 {
     SceneVector snapshot;
     const ViewFrustum f = MakeFrustum(*camera);
-    const float groundRadius = LEVEL_TILE_SIZE * 0.7071f;
+    const float groundRadius = MapConfig::TileSize * 0.7071f;
     const MapBoundsVec4 mapBounds = get_map_limits_with_camera(camera);
 
     for (int z = mapBounds.zMin; z < mapBounds.zMax; z++)
@@ -140,18 +145,18 @@ static SceneVector _createSceneVector(const Level* level, const Camera* camera)
             if (tile == Map::EMPTY || IsWallTile(tile))
                 continue;
 
-            const Vector3 position = { x * LEVEL_TILE_SIZE, 0.0f, z * LEVEL_TILE_SIZE };
-            if (!SphereVisible(f, Vector3{ position.x, -0.5f * GROUND_MODEL_SCALE, position.z }, groundRadius))
+            const Vector3 position = { x * MapConfig::TileSize, 0.0f, z * MapConfig::TileSize };
+            if (!SphereVisible(f, Vector3{ position.x, -0.5f * GroundModelScale, position.z }, groundRadius))
                 continue;
 
             snapshot.items.push_back({ tile, position, 0.0f });
         }
     }
 
-    const float halfLength = WALL_HALF_LENGTH;
-    const float halfThickness = WALL_HALF_THICKNESS;
-    const float height = WALL_HEIGHT;
-    const float wallRadius = sqrtf(halfLength * halfLength + halfThickness * halfThickness + height * height * 0.25f);
+    const float halfLength = WallGeometry::HalfLength;
+    const float halfThickness = WallGeometry::HalfThickness;
+    const float height = WallGeometry::Height;
+    const float wallRadius = sqrtf(halfLength * halfLength + halfThickness * halfThickness + height * height);
 
     // 1. cheap frustum pass
     struct Candidate
@@ -166,8 +171,9 @@ static SceneVector _createSceneVector(const Level* level, const Camera* camera)
     for (const WallInstance& wall : level->walls)
     {
         const Vector3 center = { wall.position.x, wall.position.y + height * 0.5f, wall.position.z };
-        if (!SphereVisible(f, center, wallRadius))
+        if (!SphereVisible(f, center, wallRadius)) {
             continue;
+        }
         candidates.push_back({ &wall, MakeWallBounds(wall), Vector3DistanceSqr(center, camera->position) });
     }
 
@@ -199,46 +205,45 @@ static void _drawItem(const ModelAssets& models, const SceneItem item)
     switch (item.mapTileId)
     {
     case Map::GROUND_CUBE:
-        DrawModel(models.at(ModelId::Ground), item.position, GROUND_MODEL_SCALE, WHITE);
+        DrawModel(models.at(ModelId::Ground), item.position, GroundModelScale, WHITE);
         break;
 
     case Map::MAZE_NS_DOOR:
     case Map::MAZE_WE_DOOR:
-        DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, GREEN);
+        DrawModel(models.at(ModelId::Cube), item.position, GroundModelScale, GREEN);
         break;
 
     case Map::WALL_CUBE:
         DrawModelEx(models.at(ModelId::Wall), item.position, Vector3{ 0.0f, 1.0f, 0.0f }, item.rotationDegrees,
-            Vector3{ WALL_MODEL_SCALE, WALL_MODEL_SCALE, WALL_MODEL_SCALE }, WHITE);
+            Vector3{ WallModelScale, WallModelScale, WallModelScale }, WHITE);
         break;
-    
+
     case Map::INGROWN_WALL_CUBE:
         DrawModelEx(models.at(ModelId::Wall), item.position, Vector3{ 0.0f, 1.0f, 0.0f }, item.rotationDegrees,
-            Vector3{ 2.0f * WALL_MODEL_SCALE, 2.0f * WALL_MODEL_SCALE, 2.0f * WALL_MODEL_SCALE }, BLACK);
+            Vector3{ 2.0f * WallModelScale, 2.0f * WallModelScale, 2.0f * WallModelScale }, BLACK);
         break;
 
     case Map::RED_CUBE:
-        DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, RED);
+        DrawModel(models.at(ModelId::Cube), item.position, GroundModelScale, RED);
         break;
 
     case Map::BLUE_CUBE:
-        DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, BLUE);
+        DrawModel(models.at(ModelId::Cube), item.position, GroundModelScale, BLUE);
         break;
 
     case Map::YELLOW_CUBE:
-        DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, YELLOW);
+        DrawModel(models.at(ModelId::Cube), item.position, GroundModelScale, YELLOW);
         break;
 
     case Map::GREEN_CUBE:
-        DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, GREEN);
+        DrawModel(models.at(ModelId::Cube), item.position, GroundModelScale, GREEN);
         break;
 
     default:
-        DrawModel(models.at(ModelId::Cube), item.position, GROUND_MODEL_SCALE, PURPLE);
+        DrawModel(models.at(ModelId::Cube), item.position, GroundModelScale, PURPLE);
         break;
     }
 }
-
 
 void Scene::draw(const ModelAssets& models, const Level* level, const Camera* camera, const SceneVector* sceneItems)
 {
