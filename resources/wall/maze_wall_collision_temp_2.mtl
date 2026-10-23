@@ -1,0 +1,15 @@
+# Blender 5.0.1 MTL File: 'concrete_floor_02_1k.blend'
+# www.blender.org
+
+newmtl Material.004
+Ns 98.367767
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd damaged_concrete_floor_03_diff_4k.png
+
+map_Ns -s 2 2 2 concrete_floor_02_rough_1k.jpg
+map_Bump -s 2 2 2 -bm 1.000000 concrete_floor_02_nor_gl_1k.exr

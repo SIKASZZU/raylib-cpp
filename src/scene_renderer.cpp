@@ -9,7 +9,7 @@
 namespace
 {
     constexpr float GroundModelScale = MapConfig::TileSize / 12.04f;
-    constexpr float WallModelScale = MapConfig::TileSize / 14.5f;
+    constexpr float WallModelScale = MapConfig::TileSize / 12.6f;
 }
 
 // temp method

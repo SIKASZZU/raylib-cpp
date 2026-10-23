@@ -5,8 +5,7 @@ ModelAssets LoadModelAssets()
 {
     ModelAssets models;
     // models.emplace(ModelId::Wall, LoadModel("resources/wall/maze_wall.obj"));
-    models.emplace(ModelId::Wall, LoadModel("resources/wall/maze_wall_collision_temp.obj"));
-
+    models.emplace(ModelId::Wall, LoadModel("resources/wall/maze_wall_collision_temp_2.obj"));
     models.emplace(ModelId::Ground, LoadModel("resources/ground/maze_ground.obj"));
     models.emplace(ModelId::Cube, LoadModel("resources/cube.obj"));
     return models;

@@ -22,6 +22,10 @@ int main(void)
 
     ModelAssets models = LoadModelAssets();
 
+    Model& m = models.at(ModelId::Wall);
+    Texture2D t = m.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture;
+    TraceLog(LOG_INFO, "wall tex id=%d %dx%d", t.id, t.width, t.height);
+
     const float wallScale = GetScaleToFitGround(models.at(ModelId::Wall));
     const float groundScale = GetScaleToFitGround(models.at(ModelId::Ground));
     const float cubeScale = GetScaleToFitGround(models.at(ModelId::Cube));

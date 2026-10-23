@@ -23,6 +23,8 @@ static bool IsWallTile(int tile)
 
 void LevelInitialize(Level* level)
 {
+    srand(time(0));
+
     // terrainMap
     MapGenerator::init();
 
@@ -64,9 +66,19 @@ void LevelInitialize(Level* level)
             // const bool wallSouth = z + 1 < mapBounds.zMax && IsWallTile(terrainMap[get_map_index(x, z + 1)]);
 
             // always have the large face of wall towards random stuff thats not walls.
-            // if (!wallEast || !wallWest) {
-            //     wall.rotationDegrees = 90.0f;
-            // }
+            int randomNumber = rand() % 5;
+            switch (randomNumber)
+            {
+            case 1:
+                wall.rotationDegrees = 90.0f;
+                break;
+            case 2:
+                wall.rotationDegrees = 180.0f;
+            case 3:
+                wall.rotationDegrees = 270.0f;
+            default:
+                break;
+            }
 
             level->walls.push_back(wall);
         }
