@@ -11,7 +11,7 @@
 #include "common.hpp"
 #include "maze.hpp"
 
-std::vector<int> terrainMap((MapConfig::SideLength * MapConfig::SideLength), 0);
+std::vector<int> terrainMap((MapConfig::SideLength* MapConfig::SideLength), 0);
 std::unordered_set<uint32_t> sector3Cutouts;
 
 std::set<std::pair<int, int>>& getS3PatchLocations()
@@ -138,10 +138,12 @@ namespace MapGenerator
         }
     }
 
-
     void init()
     {
         std::cout << "MapGenerator init started..." << '\n';
+
+        // ******** CLEAR LISTS ******** //
+
         terrainMap.assign(get_map_size(), Map::EMPTY);
         // diagonalGrids.clear();
         getS3PatchLocations().clear();
@@ -149,16 +151,12 @@ namespace MapGenerator
         // SECTOR_3_REMOVE_EXTRA_THICKNESS.clear();
         voidPossibleLocations.clear();
 
-        generate_test_map();
-        // _generate_glade();
+        // ******** GENERATION ******** //
 
-        // generate_ground();
-        // generate_mazes();
+        // generate_test_map();
+        _generate_glade();
+        _generate_mazes_around();
 
-        // _generate_mazes_around();
-
-        // generate_cliffs();
-        // generate_tunnels();
         std::cout << "MapGenerator init complete" << '\n';
     }
 

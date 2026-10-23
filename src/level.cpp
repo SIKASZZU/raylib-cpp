@@ -40,12 +40,16 @@ void LevelInitialize(Level* level)
             const int tileIndex = get_map_index(x, z);
             const int tile = terrainMap[tileIndex];
 
+
             if (tile == Map::EMPTY || tile == Map::VOID_CUBE ||
                 tile == Map::VOID_CUBE_NEIGHBOUR || tile == Map::INVISIBLE_CUBE)
                 continue;
 
             const float worldX = x * MapConfig::TileSize;
             const float worldZ = z * MapConfig::TileSize;
+
+            level->groundIndexByTile[tileIndex] = static_cast<int>(level->groundTiles.size());
+            level->groundTiles.push_back({ worldX, 0.0f, worldZ });
 
             if (!IsWallTile(tile))
                 continue;

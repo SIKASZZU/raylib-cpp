@@ -13,10 +13,15 @@
 
 namespace MapConfig
 {
+
     inline constexpr int SideLength{ 325 };
     inline constexpr int HalfSideLength = SideLength * .5f;
-    inline constexpr int GladeSideLength{ 10 };
-    inline constexpr int MazeSideLength{ 10 };
+
+    // these numbers should be even and same
+    constexpr int _EvenAndSameForSectionLength{ 24 };  // TODO: maybe lets create extra file for this checking?
+    inline constexpr int GladeSideLength{ _EvenAndSameForSectionLength };
+    inline constexpr int MazeSideLength{ _EvenAndSameForSectionLength };
+
     inline constexpr float TileSize{ 25.0f };
     inline constexpr float TileDiagonal{ TileSize * 0.7072f };
     inline constexpr float ViewDistance{ 1500.0f };
